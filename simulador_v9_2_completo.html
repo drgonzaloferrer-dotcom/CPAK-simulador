@@ -1,0 +1,2616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador rKA + CPAK · Dr. Gonzalo Ferrer</title>
+<style>
+  :root {
+    --bg: #f7f6f2;
+    --surface: #ffffff;
+    --surface-2: #f1efe8;
+    --border: rgba(0,0,0,0.12);
+    --border-strong: rgba(0,0,0,0.22);
+    --text: #1a1a1a;
+    --text-sec: #5f5e5a;
+    --text-ter: #888780;
+    --info-bg: #E6F1FB;
+    --info-text: #0C447C;
+    --info-border: #85B7EB;
+    --success-bg: #EAF3DE;
+    --success-text: #3B6D11;
+    --success-strong: #639922;
+    --warning-bg: #FAEEDA;
+    --warning-text: #854F0B;
+    --warning-strong: #BA7517;
+    --danger-bg: #FCEBEB;
+    --danger-text: #791F1F;
+    --danger-strong: #A32D2D;
+    --purple-bg: #EEEDFE;
+    --purple-text: #3C3489;
+    --purple-border: #7F77DD;
+    --teal-bg: #E1F5EE;
+    --teal-text: #085041;
+    --teal-border: #5DCAA5;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a1a;
+      --surface: #262625;
+      --surface-2: #2c2c2a;
+      --border: rgba(255,255,255,0.15);
+      --border-strong: rgba(255,255,255,0.3);
+      --text: #f1efe8;
+      --text-sec: #b4b2a9;
+      --text-ter: #888780;
+      --info-bg: #0C447C;
+      --info-text: #B5D4F4;
+      --info-border: #378ADD;
+      --success-bg: #27500A;
+      --success-text: #C0DD97;
+      --warning-bg: #633806;
+      --warning-text: #FAC775;
+      --danger-bg: #791F1F;
+      --danger-text: #F7C1C1;
+      --purple-bg: #3C3489;
+      --purple-text: #CECBF6;
+      --purple-border: #7F77DD;
+      --teal-bg: #085041;
+      --teal-text: #9FE1CB;
+      --teal-border: #5DCAA5;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .container { max-width: 820px; margin: 0 auto; }
+  h1 { margin: 0 0 4px; font-size: 22px; font-weight: 500; }
+  .subtitle { margin: 0; font-size: 13px; color: var(--text-sec); }
+  .header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .version { font-size: 12px; color: var(--text-ter); }
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  .card.muted { background: var(--surface-2); border: none; }
+  .card.simulator {
+    background: var(--purple-bg);
+    border: 0.5px solid var(--purple-border);
+  }
+  .card.surgical {
+    background: var(--teal-bg);
+    border: 0.5px solid var(--teal-border);
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    margin: 0 0 12px;
+    color: var(--text-sec);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .card.simulator .section-title { color: var(--purple-text); }
+  .card.surgical .section-title { color: var(--teal-text); }
+  .grid { display: grid; gap: 12px; }
+  .grid-4 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-5 { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+  label {
+    font-size: 12px;
+    color: var(--text-sec);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .card.simulator label { color: var(--purple-text); }
+  input[type="number"], select {
+    width: 100%;
+    height: 36px;
+    padding: 0 10px;
+    font-size: 14px;
+    font-family: var(--font);
+    color: var(--text);
+    background: var(--surface);
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    outline: none;
+  }
+  input[type="number"]:focus, select:focus {
+    box-shadow: 0 0 0 2px rgba(83,74,183,0.3);
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border-strong);
+    border-radius: 2px;
+    outline: none;
+    margin: 8px 0;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    background: var(--purple-border);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 1px var(--purple-border);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    background: var(--purple-border);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--surface);
+  }
+  .slider-row {
+    background: var(--surface);
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
+  }
+  .slider-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .slider-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .slider-value {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--purple-text);
+    font-variant-numeric: tabular-nums;
+  }
+  .slider-range {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-ter);
+    margin-top: -2px;
+  }
+  .slider-result {
+    font-size: 12px;
+    color: var(--text-sec);
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 0.5px solid var(--border);
+  }
+  .slider-result b {
+    font-weight: 500;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .metric {
+    background: var(--surface-2);
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+  }
+  .metric-label { font-size: 11px; color: var(--text-sec); margin-bottom: 2px; }
+  .metric-value { font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .metric-value.lg { font-size: 22px; }
+  .metric-sub { font-size: 11px; color: var(--text-ter); }
+  .metric-sub.md { font-size: 12px; }
+  .metric.accent { background: var(--info-bg); }
+  .metric.accent .metric-label,
+  .metric.accent .metric-value,
+  .metric.accent .metric-sub { color: var(--info-text); }
+
+  /* CORTES Y PROBLEMAS */
+  .cuts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .cut-box {
+    background: var(--surface);
+    border: 0.5px solid var(--teal-border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+  }
+  .cut-title {
+    font-size: 11px;
+    color: var(--teal-text);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 6px;
+  }
+  .cut-value {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 4px;
+  }
+  .cut-note {
+    font-size: 12px;
+    color: var(--text-sec);
+    line-height: 1.4;
+  }
+
+  /* ===== VISUAL CUTS - NUEVO DISEÑO INTUITIVO ===== */
+  .bone-diagram {
+    background: var(--surface);
+    border: 0.5px solid var(--teal-border);
+    border-radius: var(--radius-md);
+    padding: 16px 14px 12px;
+    margin-bottom: 10px;
+  }
+  .bone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .bone-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--teal-text);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .bone-sidebadge {
+    font-size: 10px;
+    color: var(--text-ter);
+    padding: 2px 8px;
+    background: var(--surface-2);
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .bone-svg {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto 8px;
+  }
+  .side-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-sec);
+    font-weight: 500;
+    padding: 0 4px;
+    margin-bottom: 8px;
+  }
+  .side-labels b {
+    color: var(--teal-text);
+    font-weight: 500;
+  }
+  .cuts-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding-top: 10px;
+    border-top: 0.5px solid var(--border);
+  }
+  .cut-side {
+    text-align: center;
+  }
+  .cut-side-label {
+    font-size: 10px;
+    color: var(--text-ter);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+  }
+  .cut-side-value {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .cut-side-unit {
+    font-size: 11px;
+    color: var(--text-sec);
+    margin-left: 2px;
+  }
+  .cut-side.intacto .cut-side-value { color: var(--success-strong); }
+  .cut-side.reducido .cut-side-value { color: var(--warning-strong); }
+  .cut-side.aumentado .cut-side-value { color: var(--info-text); }
+  .cut-rationale {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: var(--surface-2);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    color: var(--text-sec);
+    line-height: 1.5;
+  }
+  .cut-rationale b { color: var(--text); font-weight: 500; }
+  .params-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .param-pill {
+    background: var(--surface);
+    border: 0.5px solid var(--teal-border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+  }
+  .param-pill-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--teal-text);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .param-pill-value {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .param-pill-note {
+    font-size: 11px;
+    color: var(--text-sec);
+    line-height: 1.4;
+  }
+  .legend-cuts {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 11px;
+    color: var(--text-sec);
+    flex-wrap: wrap;
+  }
+  .legend-cuts span { display: flex; align-items: center; gap: 4px; }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block;
+  }
+  .legend-dot.intacto { background: var(--success-strong); }
+  .legend-dot.reducido { background: var(--warning-strong); }
+  .legend-dot.aumentado { background: var(--info-text); }
+
+  /* VISTA CORONAL COMPLETA DEL IMPLANTE */
+  .implant-view {
+    background: var(--surface);
+    border: 0.5px solid var(--teal-border);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .implant-view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .implant-view-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--teal-text);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .implant-view-toggles {
+    display: inline-flex;
+    background: var(--surface-2);
+    border-radius: var(--radius-md);
+    padding: 2px;
+    font-size: 11px;
+  }
+  .implant-view-toggles button {
+    flex: none;
+    min-width: auto;
+    height: 24px;
+    padding: 0 10px;
+    border: none;
+    background: transparent;
+    font-size: 11px;
+    color: var(--text-sec);
+    border-radius: 6px;
+  }
+  .implant-view-toggles button.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 0 0 0.5px var(--border);
+  }
+  .implant-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: var(--bg);
+    border-radius: var(--radius-md);
+  }
+  .implant-legend {
+    display: flex;
+    gap: 14px;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text-sec);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .implant-legend span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .implant-legend-swatch {
+    width: 14px; height: 10px;
+    border-radius: 2px;
+    display: inline-block;
+    border: 0.5px solid var(--border-strong);
+  }
+  .implant-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 0.5px solid var(--border);
+  }
+  .implant-summary-item {
+    text-align: center;
+    padding: 4px;
+  }
+  .implant-summary-label {
+    font-size: 10px;
+    color: var(--text-ter);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+  }
+  .implant-summary-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .step-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .step-list li {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px 10px 38px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    position: relative;
+    counter-increment: step;
+  }
+  .step-list li::before {
+    content: counter(step);
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 20px;
+    height: 20px;
+    background: var(--teal-border);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .step-list { counter-reset: step; }
+  .step-list li b { font-weight: 500; color: var(--teal-text); }
+
+  .problem-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .problem-list li {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    border-left: 3px solid var(--warning-strong);
+  }
+  .problem-list li.danger { border-left-color: var(--danger-strong); }
+  .problem-list li.info { border-left-color: var(--info-border); }
+  .problem-list .problem-title {
+    font-weight: 500;
+    color: var(--text);
+    display: block;
+    margin-bottom: 2px;
+  }
+  .problem-list .problem-solution {
+    color: var(--text-sec);
+    font-size: 12px;
+  }
+  .problem-list .problem-solution b {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .progress-track {
+    position: relative;
+    height: 12px;
+    background: var(--surface-2);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .progress-bar {
+    position: absolute;
+    left: 0; top: 0;
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s, background 0.3s;
+  }
+  .score-legend {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-ter);
+  }
+  .score-legend > div:nth-child(2) { text-align: center; }
+  .score-legend > div:nth-child(3) { text-align: right; }
+  .score-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .pill {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .factores {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-sec);
+    line-height: 1.6;
+  }
+  .factores strong { font-weight: 500; }
+  .eval-filosofia {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .eval-alertas {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .eval-alertas > div { margin-bottom: 4px; }
+  button {
+    flex: 1;
+    min-width: 160px;
+    height: 40px;
+    font-size: 14px;
+    font-family: var(--font);
+    color: var(--text);
+    background: var(--surface);
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.05s;
+  }
+  button:hover { background: var(--surface-2); }
+  button:active { transform: scale(0.98); }
+  button.preset {
+    flex: 0 0 auto;
+    min-width: auto;
+    height: 30px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+  button.preset.active {
+    background: var(--info-bg);
+    color: var(--info-text);
+    border-color: var(--info-border);
+  }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .preset-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+
+  .clinical-note {
+    background: var(--warning-bg);
+    color: var(--warning-text);
+    border: 0.5px solid var(--warning-strong);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.5;
+    margin-top: 12px;
+  }
+  .clinical-note b { font-weight: 500; color: var(--warning-text); }
+
+  .footer {
+    font-size: 11px;
+    color: var(--text-ter);
+    text-align: center;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 0.5px solid var(--border);
+  }
+  #plan_resumen {
+    background: var(--surface-2);
+    padding: 12px;
+    border-radius: var(--radius-md);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: var(--text-sec);
+    margin-top: 12px;
+    display: none;
+  }
+  #plan_resumen.visible { display: block; }
+  .hint {
+    font-size: 11px;
+    color: var(--text-ter);
+    margin-top: 6px;
+    font-style: italic;
+  }
+  .seg-control {
+    display: inline-flex;
+    background: var(--surface-2);
+    border-radius: var(--radius-md);
+    padding: 2px;
+    font-size: 11px;
+  }
+  .seg-control button {
+    flex: none;
+    min-width: auto;
+    height: 24px;
+    padding: 0 8px;
+    border: none;
+    background: transparent;
+    font-size: 11px;
+    color: var(--text-sec);
+    border-radius: 6px;
+  }
+  .seg-control button.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 0 0 0.5px var(--border);
+  }
+  .subsection-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--teal-text);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin: 14px 0 8px;
+  }
+  @media print {
+    body { background: white; color: black; padding: 16px; }
+    button, .actions, .preset-row, input[type="range"] { display: none; }
+    .card { break-inside: avoid; }
+    #plan_resumen.visible { display: block; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div>
+      <h1>Simulador rKA + CPAK</h1>
+      <p class="subtitle">Planificación dinámica con aHKA, mHKA estimado, JLCA, desgaste y complejidad quirúrgica</p>
+    </div>
+    <div class="version">v9.2 · Dr. Gonzalo Ferrer · Unidad de Rodilla CUA</div>
+  </div>
+
+  <!-- INPUTS -->
+  <div class="card muted">
+    <div class="section-title">1. Mediciones del paciente (telemetría)</div>
+    <div class="grid grid-4">
+      <div><label>Lado</label>
+        <select id="lado">
+          <option value="derecha">Rodilla derecha</option>
+          <option value="izquierda">Rodilla izquierda</option>
+        </select>
+      </div>
+      <div><label>MPTA (°)</label><input type="number" id="mpta" value="91" step="0.5" min="75" max="100"></div>
+      <div><label>LDFA (°)</label><input type="number" id="ldfa" value="83" step="0.5" min="75" max="100"></div>
+      <div><label>mHKA (°)</label><input type="number" id="mhka" value="6" step="0.5" min="0" max="20"></div>
+    </div>
+    <div class="grid grid-4" style="margin-top: 12px;">
+      <div><label>Dirección mHKA</label>
+        <select id="dir_hka">
+          <option value="valgo">Valgo</option>
+          <option value="varo">Varo</option>
+          <option value="neutro">Neutro</option>
+        </select>
+      </div>
+      <div><label>MCL</label>
+        <select id="mcl">
+          <option value="competente">Competente</option>
+          <option value="dudoso">Dudoso</option>
+          <option value="insuficiente">Insuficiente</option>
+        </select>
+      </div>
+      <div><label>LCL/PLC</label>
+        <select id="lcl">
+          <option value="competente">Competente</option>
+          <option value="dudoso">Dudoso</option>
+          <option value="insuficiente">Insuficiente</option>
+        </select>
+      </div>
+      <div><label>Defecto óseo</label>
+        <select id="defecto">
+          <option value="no">No</option>
+          <option value="leve">Leve (&lt;5mm)</option>
+          <option value="moderado">Moderado (5-10mm)</option>
+          <option value="severo">Severo (&gt;10mm)</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid grid-4" style="margin-top: 12px;">
+      <div><label>Patela / tracking</label>
+        <select id="patela">
+          <option value="estable">Estable</option>
+          <option value="dudoso">Dudoso</option>
+          <option value="inestable">Inestable</option>
+        </select>
+      </div>
+      <div><label>JLCA (°)</label><input type="number" id="jlca" value="0" step="0.5" min="0" max="15"></div>
+      <div><label>Reductibilidad</label>
+        <select id="reductibilidad">
+          <option value="no_aplica">No evaluada</option>
+          <option value="reductible">Reductible</option>
+          <option value="parcial">Parcial</option>
+          <option value="rigida">Rígida / no reductible</option>
+        </select>
+      </div>
+      <div><label>Compartimento colapsado</label>
+        <select id="compartimento">
+          <option value="auto">Inferir por fenotipo/desgaste</option>
+          <option value="ninguno">Ninguno claro</option>
+          <option value="medial">Medial</option>
+          <option value="lateral">Lateral</option>
+          <option value="mixto">Mixto / bicompartimental</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid grid-4" style="margin-top: 12px;">
+      <div><label>Desgaste medial estimado (mm)</label><input type="number" id="desgaste_med" value="0" step="0.5" min="0" max="15"></div>
+      <div><label>Desgaste lateral estimado (mm)</label><input type="number" id="desgaste_lat" value="0" step="0.5" min="0" max="15"></div>
+    </div>
+    <div class="clinical-note">
+      <b>Uso clínico:</b> este simulador separa fenotipo constitucional, desgaste intraarticular y plan quirúrgico. Las resecciones son referencias docentes; deben validarse con caliper, gaps, navegación/robot o criterio intraoperatorio.
+    </div>
+  </div>
+
+  <!-- CPAK -->
+  <div class="card">
+    <div class="section-title">2. Fenotipo CPAK medido</div>
+    <div class="grid grid-5">
+      <div class="metric"><div class="metric-label">aHKA</div><div class="metric-value" id="ahka_val">—</div><div class="metric-sub" id="ahka_int">—</div></div>
+      <div class="metric"><div class="metric-label">JLO</div><div class="metric-value" id="jlo_val">—</div><div class="metric-sub" id="jlo_int">—</div></div>
+      <div class="metric"><div class="metric-label">Tibia</div><div class="metric-value" id="tibia_lect">—</div><div class="metric-sub">MPTA</div></div>
+      <div class="metric"><div class="metric-label">Fémur</div><div class="metric-value" id="femur_lect">—</div><div class="metric-sub">LDFA</div></div>
+      <div class="metric accent"><div class="metric-label">CPAK</div><div class="metric-value" id="cpak_tipo">—</div><div class="metric-sub" id="cpak_desc">—</div></div>
+    </div>
+  </div>
+
+  <!-- SIMULADOR -->
+  <div class="card simulator">
+    <div class="section-title">
+      <span>3. Simulador manual de corrección</span>
+    </div>
+    <div class="preset-row">
+      <span style="font-size: 11px; color: var(--purple-text); margin-right: 4px;">Presets:</span>
+      <button class="preset" data-preset="preservar" type="button">Preservar (0°/0°)</button>
+      <button class="preset" data-preset="rka" type="button">rKA restrictivo 87-93</button>
+      <button class="preset" data-preset="neutro" type="button">Neutro mecánico 90/90</button>
+      <button class="preset" data-preset="conservador" type="button">Conservador 2°/2°</button>
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-head">
+        <span class="slider-title">Corrección tibial (MPTA)</span>
+        <div class="seg-control">
+          <button id="modo_tibia_inc" class="active" type="button">Δ desde medido</button>
+          <button id="modo_tibia_abs" type="button">Valor absoluto</button>
+        </div>
+        <span class="slider-value" id="tibia_slider_val">0.0°</span>
+      </div>
+      <input type="range" id="tibia_slider" min="-8" max="8" step="0.5" value="0">
+      <div class="slider-range">
+        <span id="tibia_range_min">−8° (más varo)</span>
+        <span id="tibia_range_max">+8° (más valgo)</span>
+      </div>
+      <div class="slider-result">
+        MPTA final: <b id="tibia_result">91.0°</b> · <span id="tibia_action">sin corrección</span>
+      </div>
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-head">
+        <span class="slider-title">Corrección femoral (LDFA)</span>
+        <div class="seg-control">
+          <button id="modo_femur_inc" class="active" type="button">Δ desde medido</button>
+          <button id="modo_femur_abs" type="button">Valor absoluto</button>
+        </div>
+        <span class="slider-value" id="femur_slider_val">0.0°</span>
+      </div>
+      <input type="range" id="femur_slider" min="-8" max="8" step="0.5" value="0">
+      <div class="slider-range">
+        <span id="femur_range_min">−8° (más valgo)</span>
+        <span id="femur_range_max">+8° (más varo)</span>
+      </div>
+      <div class="slider-result">
+        LDFA final: <b id="femur_result">83.0°</b> · <span id="femur_action">sin corrección</span>
+      </div>
+    </div>
+
+    <p class="hint">
+      <b>Δ desde medido</b>: el slider suma/resta grados al ángulo del paciente. <b>Valor absoluto</b>: el slider define el ángulo final.<br>
+      Tibia → MPTA: subir = más valgo, bajar = más varo. Fémur → LDFA: subir = más varo, bajar = más valgo.
+    </p>
+  </div>
+
+  <!-- VISTA CORONAL ARRIBA -->
+  <div class="card surgical">
+    <div class="section-title">4. Vista coronal — implante y línea articular</div>
+    <div class="subsection-title">Vista coronal — posición del implante y línea articular</div>
+
+    <div class="implant-view">
+      <div class="implant-view-header">
+        <span class="implant-view-title">▶ Rodilla completa: hueso, cortes e implante <span id="lado_badge_implant" style="font-size: 11px; color: var(--text-sec); font-weight: 400; text-transform: none; margin-left: 4px;">— Rodilla derecha</span></span>
+        <div class="implant-view-toggles">
+          <button id="view_before" type="button">Pre-op</button>
+          <button id="view_after" class="active" type="button">Post-implante</button>
+          <button id="view_compare" type="button">Comparar</button>
+        </div>
+      </div>
+      <svg class="implant-svg" id="implant_svg" viewBox="0 0 500 460" preserveAspectRatio="xMidYMid meet">
+        <!-- Se dibuja dinámicamente -->
+      </svg>
+      <div class="implant-legend">
+        <span><span class="implant-legend-swatch" style="background: var(--surface-2);"></span>Hueso nativo</span>
+        <span><span class="implant-legend-swatch" style="background: rgba(186,117,23,0.25); border-color: var(--warning-strong);"></span>Hueso resecado</span>
+        <span><span class="implant-legend-swatch" style="background: #c0c5ce; border-color: #6b7280;"></span>Componente metálico</span>
+        <span><span class="implant-legend-swatch" style="background: #fff8d6; border-color: #d4a017;"></span>Inserto polietileno</span>
+        <span><span style="display:inline-block; width:14px; height:0; border-top: 2px dashed var(--info-text);"></span>Eje mecánico</span>
+      </div>
+      <div class="implant-summary">
+        <div class="implant-summary-item">
+          <div class="implant-summary-label">aHKA pre</div>
+          <div class="implant-summary-value" id="impl_ahka_pre">—</div>
+        </div>
+        <div class="implant-summary-item">
+          <div class="implant-summary-label">aHKA post</div>
+          <div class="implant-summary-value" id="impl_ahka_post">—</div>
+        </div>
+        <div class="implant-summary-item">
+          <div class="implant-summary-label">JLO pre</div>
+          <div class="implant-summary-value" id="impl_jlo_pre">—</div>
+        </div>
+        <div class="implant-summary-item">
+          <div class="implant-summary-label">JLO post</div>
+          <div class="implant-summary-value" id="impl_jlo_post">—</div>
+        </div>
+        <div class="implant-summary-item">
+          <div class="implant-summary-label">Cambio línea articular</div>
+          <div class="implant-summary-value" id="impl_jl_change">—</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RESULTADO -->
+  <div class="card">
+    <div class="section-title">5. Resultado simulado (en vivo)</div>
+    <div class="grid grid-2" style="margin-bottom: 12px;">
+      <div class="metric"><div class="metric-label">Tibia final</div><div class="metric-value lg" id="tibia_plan">—</div><div class="metric-sub md" id="tibia_correc">—</div></div>
+      <div class="metric"><div class="metric-label">Fémur final</div><div class="metric-value lg" id="femur_plan">—</div><div class="metric-sub md" id="femur_correc">—</div></div>
+    </div>
+    <div class="grid grid-2">
+      <div class="metric"><div class="metric-label">aHKA planificado</div><div class="metric-value lg" id="eje_final">—</div><div class="metric-sub md" id="eje_delta">No equivale a mHKA real</div></div>
+      <div class="metric"><div class="metric-label">mHKA estimado</div><div class="metric-value lg" id="mhka_estimado">—</div><div class="metric-sub md" id="mhka_estimado_desc">Estimación desde mHKA basal + ΔaHKA</div></div>
+      <div class="metric"><div class="metric-label">JLO final</div><div class="metric-value lg" id="jlo_final">—</div><div class="metric-sub md" id="jlo_final_desc">—</div></div>
+    </div>
+  </div>
+
+  <!-- PLAN OPERATORIO -->
+  <div class="card surgical">
+    <div class="section-title">6. Plan operatorio estimado</div>
+
+    <div class="subsection-title">Cortes estimados de referencia — vista coronal esquemática</div>
+
+    <div class="legend-cuts">
+      <span><span class="legend-dot intacto"></span>Lado intacto (corte estándar)</span>
+      <span><span class="legend-dot reducido"></span>Lado colapsado (corte reducido)</span>
+      <span><span class="legend-dot aumentado"></span>Lado a corregir (corte aumentado)</span>
+    </div>
+
+    <!-- DIAGRAMA TIBIA -->
+    <div class="bone-diagram">
+      <div class="bone-header">
+        <span class="bone-title">▼ Tibia proximal (corte horizontal)</span>
+        <span class="bone-sidebadge" id="tibia_badge">—</span>
+      </div>
+      <svg class="bone-svg" id="tibia_svg" viewBox="0 0 400 130" preserveAspectRatio="xMidYMid meet">
+        <!-- Se dibuja dinámicamente desde JS -->
+      </svg>
+      <div class="side-labels">
+        <span><b>MEDIAL</b> (interno)</span>
+        <span><b>LATERAL</b> (externo)</span>
+      </div>
+      <div class="cuts-summary">
+        <div class="cut-side" id="tibia_med_box">
+          <div class="cut-side-label">Resección medial</div>
+          <div><span class="cut-side-value" id="tibia_med_mm">—</span><span class="cut-side-unit">mm</span></div>
+        </div>
+        <div class="cut-side" id="tibia_lat_box">
+          <div class="cut-side-label">Resección lateral</div>
+          <div><span class="cut-side-value" id="tibia_lat_mm">—</span><span class="cut-side-unit">mm</span></div>
+        </div>
+      </div>
+      <div class="cut-rationale" id="tibia_rationale">—</div>
+    </div>
+
+    <!-- DIAGRAMA FEMUR DISTAL -->
+    <div class="bone-diagram">
+      <div class="bone-header">
+        <span class="bone-title">▼ Fémur distal (corte horizontal en extensión)</span>
+        <span class="bone-sidebadge" id="femur_badge">—</span>
+      </div>
+      <svg class="bone-svg" id="femur_svg" viewBox="0 0 400 130" preserveAspectRatio="xMidYMid meet">
+        <!-- Se dibuja dinámicamente desde JS -->
+      </svg>
+      <div class="side-labels">
+        <span><b>MEDIAL</b> (interno)</span>
+        <span><b>LATERAL</b> (externo)</span>
+      </div>
+      <div class="cuts-summary">
+        <div class="cut-side" id="femur_med_box">
+          <div class="cut-side-label">Resección distal medial</div>
+          <div><span class="cut-side-value" id="femur_med_mm">—</span><span class="cut-side-unit">mm</span></div>
+        </div>
+        <div class="cut-side" id="femur_lat_box">
+          <div class="cut-side-label">Resección distal lateral</div>
+          <div><span class="cut-side-value" id="femur_lat_mm">—</span><span class="cut-side-unit">mm</span></div>
+        </div>
+      </div>
+      <div class="cut-rationale" id="femur_rationale">—</div>
+    </div>
+
+    <!-- DIAGRAMA FEMUR POSTERIOR -->
+    <div class="bone-diagram">
+      <div class="bone-header">
+        <span class="bone-title">▼ Fémur posterior (vista axial en flexión)</span>
+        <span class="bone-sidebadge" id="postfem_badge">—</span>
+      </div>
+      <svg class="bone-svg" id="postfem_svg" viewBox="0 0 400 130" preserveAspectRatio="xMidYMid meet">
+        <!-- Se dibuja dinámicamente desde JS -->
+      </svg>
+      <div class="side-labels">
+        <span><b>MEDIAL</b> (interno)</span>
+        <span><b>LATERAL</b> (externo)</span>
+      </div>
+      <div class="cuts-summary">
+        <div class="cut-side" id="postmed_box">
+          <div class="cut-side-label">Resección posterior medial</div>
+          <div><span class="cut-side-value" id="postmed_mm">—</span><span class="cut-side-unit">mm</span></div>
+        </div>
+        <div class="cut-side" id="postlat_box">
+          <div class="cut-side-label">Resección posterior lateral</div>
+          <div><span class="cut-side-value" id="postlat_mm">—</span><span class="cut-side-unit">mm</span></div>
+        </div>
+      </div>
+      <div class="cut-rationale" id="postfem_rationale">—</div>
+    </div>
+
+    <div class="subsection-title">Parámetros adicionales del plan</div>
+    <div class="params-row">
+      <div class="param-pill">
+        <span class="param-pill-label">Slope tibial</span>
+        <span class="param-pill-value" id="slope_tibial">—</span>
+        <span class="param-pill-note" id="slope_tibial_note">—</span>
+      </div>
+      <div class="param-pill">
+        <span class="param-pill-label">Rotación femoral</span>
+        <span class="param-pill-value" id="rot_femoral">—</span>
+        <span class="param-pill-note" id="rot_femoral_note">—</span>
+      </div>
+      <div class="param-pill">
+        <span class="param-pill-label">Grosor implante</span>
+        <span class="param-pill-value">10 mm total</span>
+        <span class="param-pill-note">Cemento ~1 mm incluido. Referencia base de cortes.</span>
+      </div>
+      <div class="param-pill">
+        <span class="param-pill-label">Regla mm/grado</span>
+        <span class="param-pill-value">1 mm ≈ 1°</span>
+        <span class="param-pill-note">Variación de resección unilateral cambia ~1° de alineación.</span>
+      </div>
+    </div>
+
+    <div class="subsection-title">Gaps esperados intraoperatorios</div>
+    <div class="cuts-grid">
+      <div class="cut-box">
+        <div class="cut-title">Gap extensión medial</div>
+        <div class="cut-value" id="gap_ext_med">— mm</div>
+        <div class="cut-note">objetivo rKA: 1–2 mm</div>
+      </div>
+      <div class="cut-box">
+        <div class="cut-title">Gap extensión lateral</div>
+        <div class="cut-value" id="gap_ext_lat">— mm</div>
+        <div class="cut-note" id="gap_ext_lat_note">objetivo: simétrico ±2 mm</div>
+      </div>
+      <div class="cut-box">
+        <div class="cut-title">Gap flexión medial</div>
+        <div class="cut-value" id="gap_flex_med">— mm</div>
+        <div class="cut-note">objetivo rKA: 1–2 mm</div>
+      </div>
+      <div class="cut-box">
+        <div class="cut-title">Gap flexión lateral</div>
+        <div class="cut-value" id="gap_flex_lat">— mm</div>
+        <div class="cut-note" id="gap_flex_lat_note">objetivo rKA: 3–7 mm (laxitud fisiológica)</div>
+      </div>
+    </div>
+
+    <div class="subsection-title">Secuencia paso a paso recomendada</div>
+    <ol class="step-list" id="secuencia_pasos"></ol>
+  </div>
+
+  <!-- PROBLEMAS ANTICIPADOS -->
+  <div class="card">
+    <div class="section-title">7. Problemas anticipados y soluciones</div>
+    <ul class="problem-list" id="problemas_lista"></ul>
+  </div>
+
+  <!-- SCORE -->
+  <div class="card">
+    <div class="score-header">
+      <div class="section-title" style="margin: 0;">8. Score heurístico de complejidad</div>
+      <div class="pill" id="score_label">—</div>
+    </div>
+    <div class="progress-track"><div class="progress-bar" id="score_bar"></div></div>
+    <div class="score-legend">
+      <div>0-30 Baja</div>
+      <div>31-60 Media</div>
+      <div>61-100 Alta</div>
+    </div>
+    <div class="clinical-note" style="margin-top: 10px;">
+      <b>Advertencia:</b> score heurístico no validado. Úselo para docencia, discusión preoperatoria y anticipación de complejidad; no como predictor clínico formal.
+    </div>
+    <div class="factores" id="score_factores"></div>
+  </div>
+
+  <!-- EVALUADOR -->
+  <div class="card" id="eval_box">
+    <div class="section-title">9. Filosofía recomendada y alertas globales</div>
+    <div class="eval-filosofia" id="eval_filosofia">—</div>
+    <div class="eval-alertas" id="eval_alertas"></div>
+  </div>
+
+  <!-- ACCIONES -->
+  <div class="actions">
+    <button id="btn_resumen" type="button">Generar resumen de texto</button>
+    <button id="btn_imprimir" type="button">Imprimir / Guardar PDF</button>
+    <button id="btn_reset" type="button">Resetear todo</button>
+  </div>
+
+  <pre id="plan_resumen"></pre>
+
+  <div class="footer">
+    Documento de trabajo clínico · CPAK + rKA según Vendittoli, MacDessi, Griffiths-Jones · Score no validado · No reemplaza balance intraoperatorio ni juicio quirúrgico
+  </div>
+
+</div>
+
+<script>
+(function(){
+  function $(id){ return document.getElementById(id); }
+
+  let modoTibia = 'incremental';
+  let modoFemur = 'incremental';
+
+  // Constantes
+  const IMPLANTE_GROSOR = 10; // mm total (combinado tibia + componente femoral lado)
+  const CARTILAGO_NORMAL = 2; // mm asumido
+  const REGLA_MM_GRADO = 1; // 1 mm ≈ 1° de cambio angular
+
+  function setModoTibia(modo){
+    modoTibia = modo;
+    $('modo_tibia_inc').classList.toggle('active', modo === 'incremental');
+    $('modo_tibia_abs').classList.toggle('active', modo === 'absoluto');
+    const slider = $('tibia_slider');
+    const mpta = parseFloat($('mpta').value) || 90;
+    if (modo === 'incremental'){
+      slider.min = -8; slider.max = 8; slider.step = 0.5; slider.value = 0;
+      $('tibia_range_min').textContent = '−8° (más varo)';
+      $('tibia_range_max').textContent = '+8° (más valgo)';
+    } else {
+      slider.min = 80; slider.max = 100; slider.step = 0.5; slider.value = mpta;
+      $('tibia_range_min').textContent = '80° (varo extremo)';
+      $('tibia_range_max').textContent = '100° (valgo extremo)';
+    }
+    calcular();
+  }
+
+  function setModoFemur(modo){
+    modoFemur = modo;
+    $('modo_femur_inc').classList.toggle('active', modo === 'incremental');
+    $('modo_femur_abs').classList.toggle('active', modo === 'absoluto');
+    const slider = $('femur_slider');
+    const ldfa = parseFloat($('ldfa').value) || 90;
+    if (modo === 'incremental'){
+      slider.min = -8; slider.max = 8; slider.step = 0.5; slider.value = 0;
+      $('femur_range_min').textContent = '−8° (más valgo)';
+      $('femur_range_max').textContent = '+8° (más varo)';
+    } else {
+      slider.min = 80; slider.max = 100; slider.step = 0.5; slider.value = ldfa;
+      $('femur_range_min').textContent = '80° (valgo extremo)';
+      $('femur_range_max').textContent = '100° (varo extremo)';
+    }
+    calcular();
+  }
+
+  function calcular(){
+    const lado = $('lado').value;
+    const esDerecha = (lado === 'derecha');
+    const mpta = parseFloat($('mpta').value) || 90;
+    const ldfa = parseFloat($('ldfa').value) || 90;
+    const mhka = parseFloat($('mhka').value) || 0;
+    const dir = $('dir_hka').value;
+    const mcl = $('mcl').value;
+    const lcl = $('lcl').value;
+    const def = $('defecto').value;
+    const pat = $('patela').value;
+    const jlca = parseFloat($('jlca').value) || 0;
+    const reductibilidad = $('reductibilidad').value;
+    const compartimentoInput = $('compartimento').value;
+    const desgasteMed = parseFloat($('desgaste_med').value) || 0;
+    const desgasteLat = parseFloat($('desgaste_lat').value) || 0;
+
+    const ahka = mpta - ldfa;
+    const jlo = mpta + ldfa;
+    const hka_signed = dir === 'varo' ? -mhka : (dir === 'valgo' ? mhka : 0);
+
+    let ahka_tipo;
+    if (ahka < -2) ahka_tipo = 'Varo';
+    else if (ahka > 2) ahka_tipo = 'Valgo';
+    else ahka_tipo = 'Neutro';
+
+    let jlo_tipo;
+    if (jlo < 177) jlo_tipo = 'Apex distal';
+    else if (jlo > 183) jlo_tipo = 'Apex proximal';
+    else jlo_tipo = 'Neutra';
+
+    const cpak_matriz = {
+      'Varo|Apex distal': 'CPAK I', 'Neutro|Apex distal': 'CPAK II', 'Valgo|Apex distal': 'CPAK III',
+      'Varo|Neutra': 'CPAK IV', 'Neutro|Neutra': 'CPAK V', 'Valgo|Neutra': 'CPAK VI',
+      'Varo|Apex proximal': 'CPAK VII', 'Neutro|Apex proximal': 'CPAK VIII', 'Valgo|Apex proximal': 'CPAK IX'
+    };
+    const cpak = cpak_matriz[ahka_tipo + '|' + jlo_tipo];
+
+    // Capa de desgaste: separa fenotipo constitucional de colapso intraarticular real
+    let colapsoDominante = compartimentoInput;
+    if (compartimentoInput === 'auto'){
+      if (desgasteMed >= 3 && desgasteMed - desgasteLat >= 2) colapsoDominante = 'medial';
+      else if (desgasteLat >= 3 && desgasteLat - desgasteMed >= 2) colapsoDominante = 'lateral';
+      else if (desgasteMed >= 3 && desgasteLat >= 3) colapsoDominante = 'mixto';
+      else if (ahka_tipo === 'Varo') colapsoDominante = 'medial';
+      else if (ahka_tipo === 'Valgo') colapsoDominante = 'lateral';
+      else colapsoDominante = 'ninguno';
+    }
+
+    const tibia_dev = mpta - 90;
+    const femur_dev = ldfa - 90;
+    const tibia_lect = Math.abs(tibia_dev) < 0.5 ? 'Neutra' : (tibia_dev > 0 ? Math.abs(tibia_dev).toFixed(1) + '° valgo' : Math.abs(tibia_dev).toFixed(1) + '° varo');
+    const femur_lect = Math.abs(femur_dev) < 0.5 ? 'Neutro' : (femur_dev > 0 ? Math.abs(femur_dev).toFixed(1) + '° varo' : Math.abs(femur_dev).toFixed(1) + '° valgo');
+
+    $('ahka_val').textContent = Math.abs(ahka).toFixed(1) + '° ' + (ahka < 0 ? 'varo' : (ahka > 0 ? 'valgo' : 'neutro'));
+    $('ahka_int').textContent = ahka_tipo;
+    $('jlo_val').textContent = jlo.toFixed(1) + '°';
+    $('jlo_int').textContent = jlo_tipo;
+    $('tibia_lect').textContent = tibia_lect;
+    $('femur_lect').textContent = femur_lect;
+    $('cpak_tipo').textContent = cpak;
+    $('cpak_desc').textContent = ahka_tipo + ' + ' + jlo_tipo;
+
+    // SLIDERS
+    const tibia_slider_raw = parseFloat($('tibia_slider').value);
+    const femur_slider_raw = parseFloat($('femur_slider').value);
+
+    let mpta_plan, ldfa_plan, delta_tibia, delta_femur;
+
+    if (modoTibia === 'incremental'){
+      delta_tibia = tibia_slider_raw;
+      mpta_plan = mpta + delta_tibia;
+    } else {
+      mpta_plan = tibia_slider_raw;
+      delta_tibia = mpta_plan - mpta;
+    }
+
+    if (modoFemur === 'incremental'){
+      delta_femur = femur_slider_raw;
+      ldfa_plan = ldfa + delta_femur;
+    } else {
+      ldfa_plan = femur_slider_raw;
+      delta_femur = ldfa_plan - ldfa;
+    }
+
+    if (modoTibia === 'incremental'){
+      $('tibia_slider_val').textContent = (delta_tibia >= 0 ? '+' : '') + delta_tibia.toFixed(1) + '°';
+    } else {
+      $('tibia_slider_val').textContent = mpta_plan.toFixed(1) + '°';
+    }
+    if (modoFemur === 'incremental'){
+      $('femur_slider_val').textContent = (delta_femur >= 0 ? '+' : '') + delta_femur.toFixed(1) + '°';
+    } else {
+      $('femur_slider_val').textContent = ldfa_plan.toFixed(1) + '°';
+    }
+
+    const tibia_dir_txt = delta_tibia > 0.1 ? 'hacia valgo' : (delta_tibia < -0.1 ? 'hacia varo' : '');
+    const femur_dir_txt = delta_femur > 0.1 ? 'hacia varo' : (delta_femur < -0.1 ? 'hacia valgo' : '');
+
+    $('tibia_result').textContent = mpta_plan.toFixed(1) + '°';
+    $('tibia_action').textContent = Math.abs(delta_tibia) < 0.1 ? 'sin corrección' : 'corrige ' + Math.abs(delta_tibia).toFixed(1) + '° ' + tibia_dir_txt;
+    $('femur_result').textContent = ldfa_plan.toFixed(1) + '°';
+    $('femur_action').textContent = Math.abs(delta_femur) < 0.1 ? 'sin corrección' : 'corrige ' + Math.abs(delta_femur).toFixed(1) + '° ' + femur_dir_txt;
+
+    const ahka_plan = mpta_plan - ldfa_plan;
+    const jlo_plan = mpta_plan + ldfa_plan;
+    const delta_eje_estimado = ahka_plan - ahka;
+    const mhka_estimado = hka_signed + delta_eje_estimado;
+
+    let jlo_plan_tipo;
+    if (jlo_plan < 177) jlo_plan_tipo = 'apex distal';
+    else if (jlo_plan > 183) jlo_plan_tipo = 'apex proximal';
+    else jlo_plan_tipo = 'neutra';
+
+    $('tibia_plan').textContent = mpta_plan.toFixed(1) + '°';
+    $('tibia_correc').textContent = Math.abs(delta_tibia) < 0.1 ? 'preservado' : 'Δ ' + (delta_tibia > 0 ? '+' : '') + delta_tibia.toFixed(1) + '° ' + (delta_tibia > 0 ? 'valgo' : 'varo');
+    $('femur_plan').textContent = ldfa_plan.toFixed(1) + '°';
+    $('femur_correc').textContent = Math.abs(delta_femur) < 0.1 ? 'preservado' : 'Δ ' + (delta_femur > 0 ? '+' : '') + delta_femur.toFixed(1) + '° ' + (delta_femur > 0 ? 'varo' : 'valgo');
+
+    $('eje_final').textContent = Math.abs(ahka_plan).toFixed(1) + '° ' + (ahka_plan < -0.1 ? 'varo' : (ahka_plan > 0.1 ? 'valgo' : 'neutro'));
+    const delta_eje = delta_eje_estimado;
+    $('eje_delta').textContent = 'Δ aHKA vs medido: ' + (delta_eje >= 0 ? '+' : '') + delta_eje.toFixed(1) + '°';
+    $('mhka_estimado').textContent = Math.abs(mhka_estimado).toFixed(1) + '° ' + (mhka_estimado < -0.1 ? 'varo' : (mhka_estimado > 0.1 ? 'valgo' : 'neutro'));
+    $('mhka_estimado_desc').textContent = 'Estimado; no incluye balance ligamentario/JLCA residual';
+    $('jlo_final').textContent = jlo_plan.toFixed(1) + '°';
+    $('jlo_final_desc').textContent = jlo_plan_tipo;
+
+    // ============================================================
+    // PLAN OPERATORIO — CORTES ESTIMADOS DE REFERENCIA (v9.2)
+    //
+    // LÓGICA CORRECTA:
+    // - Implante = 10 mm de grosor total
+    // - Cartílago asumido en lado sano = 2 mm
+    // - Lado INTACTO: cortar 8 mm (= 10 implante - 2 cartilago). Es la REFERENCIA.
+    // - Lado COLAPSADO: cortar solo 2 mm (porque el desgaste ya hundió el hueso ~6 mm).
+    //   El implante "rellena" el espacio del desgaste.
+    // - El ÁNGULO final lo define la DIFERENCIA entre medial y lateral:
+    //     · Diferencia 0 mm → corte horizontal (paralelo al eje)
+    //     · Diferencia X mm → corte inclinado, cambia ~X° la alineación
+    // - El lado intacto SE MANTIENE en 8 mm como ancla del joint line.
+    // - La CORRECCIÓN se aplica modificando el corte del lado opuesto:
+    //     · Tibia varo, quiero más valgo → reseco MÁS lateral (sube de 8 a 8+X)
+    //     · Tibia valgo, quiero más varo → reseco MÁS medial (sube de 8 a 8+X)
+    // ============================================================
+
+    const BASE_INTACTO = 8;
+    const BASE_COLAPSADO = 2;
+
+    // ===== CORTE TIBIAL =====
+    let corte_tib_med, corte_tib_lat;
+    let tibia_med_estado, tibia_lat_estado;
+    let tibia_rationale_text = '';
+    let tibia_badge_text = '';
+
+    if (colapsoDominante === 'medial'){
+      // Medial colapsado, lateral intacto
+      corte_tib_med = BASE_COLAPSADO;
+      corte_tib_lat = BASE_INTACTO;
+      tibia_med_estado = 'reducido';
+      tibia_lat_estado = 'intacto';
+      tibia_badge_text = 'Colapso medial · lateral ancla';
+      tibia_rationale_text = '<b>Base de cortes:</b> lateral intacto = <b>' + BASE_INTACTO + ' mm</b> (referencia desde compartimento sano). Medial colapsado = <b>' + BASE_COLAPSADO + ' mm</b> (el implante rellena desgaste estimado). Fenotipo: ' + ahka_tipo + '; desgaste medial/lateral: ' + desgasteMed + '/' + desgasteLat + ' mm.';
+    } else if (colapsoDominante === 'lateral'){
+      // Lateral colapsado, medial intacto
+      corte_tib_med = BASE_INTACTO;
+      corte_tib_lat = BASE_COLAPSADO;
+      tibia_med_estado = 'intacto';
+      tibia_lat_estado = 'reducido';
+      tibia_badge_text = 'Colapso lateral · medial ancla';
+      tibia_rationale_text = '<b>Base de cortes:</b> medial intacto = <b>' + BASE_INTACTO + ' mm</b> (referencia desde compartimento sano). Lateral colapsado = <b>' + BASE_COLAPSADO + ' mm</b>. Fenotipo: ' + ahka_tipo + '; desgaste medial/lateral: ' + desgasteMed + '/' + desgasteLat + ' mm.';
+    } else if (colapsoDominante === 'mixto'){
+      corte_tib_med = 4;
+      corte_tib_lat = 4;
+      tibia_med_estado = 'reducido';
+      tibia_lat_estado = 'reducido';
+      tibia_badge_text = 'Colapso mixto · no hay lado ancla claro';
+      tibia_rationale_text = '<b>Base de cortes:</b> desgaste bicompartimental. No hay compartimento sano confiable como ancla. Usar estas cifras solo como referencia inicial y validar con gaps, resección real y estabilidad.';
+    } else {
+      corte_tib_med = BASE_INTACTO;
+      corte_tib_lat = BASE_INTACTO;
+      tibia_med_estado = 'intacto';
+      tibia_lat_estado = 'intacto';
+      tibia_badge_text = 'Sin colapso dominante · cortes simétricos';
+      tibia_rationale_text = '<b>Base de cortes:</b> sin colapso significativo declarado. Resección simétrica <b>' + BASE_INTACTO + ' mm bilateral</b> como referencia docente.';
+    }
+
+    // ===== Aplicar corrección tibial =====
+    // Convención: delta_tibia > 0 → más valgo → MPTA sube
+    // Estrategia conservadora: preservar el lado sano como ancla cuando existe.
+    if (Math.abs(delta_tibia) > 0.5){
+      const ajuste = Math.round(Math.abs(delta_tibia));
+
+      if (delta_tibia > 0){
+        // Hacia valgo (MPTA sube)
+        if (colapsoDominante === 'medial' || colapsoDominante === 'ninguno' || colapsoDominante === 'mixto'){
+          corte_tib_lat += ajuste;
+          tibia_lat_estado = 'aumentado';
+          tibia_rationale_text += ' <b>Corrección +' + delta_tibia.toFixed(1) + '° (más valgo):</b> aumentar resección lateral en ' + ajuste + ' mm → lateral queda en <b>' + corte_tib_lat + ' mm</b>, medial en <b>' + corte_tib_med + ' mm</b>.';
+        } else {
+          corte_tib_med = Math.max(2, corte_tib_med - ajuste);
+          tibia_med_estado = 'reducido';
+          tibia_rationale_text += ' <b>Corrección +' + delta_tibia.toFixed(1) + '° (más valgo):</b> reducir resección medial en ' + ajuste + ' mm → medial queda en <b>' + corte_tib_med + ' mm</b>, lateral en <b>' + corte_tib_lat + ' mm</b>.';
+        }
+      } else {
+        // Hacia varo (MPTA baja)
+        if (colapsoDominante === 'lateral' || colapsoDominante === 'ninguno' || colapsoDominante === 'mixto'){
+          corte_tib_med += ajuste;
+          tibia_med_estado = 'aumentado';
+          tibia_rationale_text += ' <b>Corrección ' + delta_tibia.toFixed(1) + '° (más varo):</b> aumentar resección medial en ' + ajuste + ' mm → medial queda en <b>' + corte_tib_med + ' mm</b>, lateral en <b>' + corte_tib_lat + ' mm</b>.';
+        } else {
+          corte_tib_lat = Math.max(2, corte_tib_lat - ajuste);
+          tibia_lat_estado = 'reducido';
+          tibia_rationale_text += ' <b>Corrección ' + delta_tibia.toFixed(1) + '° (más varo):</b> reducir resección lateral en ' + ajuste + ' mm → lateral queda en <b>' + corte_tib_lat + ' mm</b>, medial en <b>' + corte_tib_med + ' mm</b>.';
+        }
+      }
+    }
+
+    // ===== CORTE FÉMUR DISTAL =====
+    let corte_fem_med, corte_fem_lat;
+    let femur_med_estado, femur_lat_estado;
+    let femur_rationale_text = '';
+    let femur_badge_text = '';
+
+    if (ahka_tipo === 'Valgo'){
+      // Cóndilo lateral hipoplásico, medial intacto
+      corte_fem_med = BASE_INTACTO;
+      corte_fem_lat = BASE_COLAPSADO;
+      femur_med_estado = 'intacto';
+      femur_lat_estado = 'reducido';
+      femur_badge_text = 'Valgo · cóndilo lateral hipoplásico';
+      femur_rationale_text = '<b>Base de cortes:</b> Medial intacto = <b>' + BASE_INTACTO + ' mm</b> (referencia). Lateral hipoplásico = <b>' + BASE_COLAPSADO + ' mm</b> (el implante restablece la altura condilar). Reproduce el LDFA nativo de ' + ldfa + '°.';
+    } else if (ahka_tipo === 'Varo'){
+      // En varo los cóndilos distales habitualmente están conservados
+      corte_fem_med = BASE_INTACTO;
+      corte_fem_lat = BASE_INTACTO;
+      femur_med_estado = 'intacto';
+      femur_lat_estado = 'intacto';
+      femur_badge_text = 'Varo · cóndilos distales conservados';
+      femur_rationale_text = '<b>Base de cortes:</b> en varo los cóndilos distales suelen estar intactos (el desgaste es proximal tibial). Resección simétrica <b>' + BASE_INTACTO + ' mm bilateral</b>.';
+    } else {
+      corte_fem_med = BASE_INTACTO;
+      corte_fem_lat = BASE_INTACTO;
+      femur_med_estado = 'intacto';
+      femur_lat_estado = 'intacto';
+      femur_badge_text = 'Neutro · cortes simétricos';
+      femur_rationale_text = '<b>Base de cortes:</b> resección simétrica <b>' + BASE_INTACTO + ' mm bilateral</b>.';
+    }
+
+    // ===== Aplicar corrección femoral =====
+    // Convención: delta_femur > 0 → LDFA sube → más varo femoral
+    //   Para subir LDFA: cortar MENOS medial distal o MÁS lateral distal
+    // delta_femur < 0 → LDFA baja → más valgo femoral
+    //   Para bajar LDFA: cortar MÁS medial distal o MENOS lateral distal
+    if (Math.abs(delta_femur) > 0.5){
+      const ajuste_f = Math.round(Math.abs(delta_femur));
+
+      if (delta_femur > 0){
+        // Hacia varo (LDFA sube)
+        if (ahka_tipo === 'Valgo'){
+          // Hipoplasia lateral ya presente. Reducir más el medial intacto
+          corte_fem_med = Math.max(2, corte_fem_med - ajuste_f);
+          femur_med_estado = 'reducido';
+          femur_rationale_text += ' <b>Corrección +' + delta_femur.toFixed(1) + '° (hacia varo):</b> reducir resección distal medial en ' + ajuste_f + ' mm → medial queda en <b>' + corte_fem_med + ' mm</b>, lateral se mantiene en <b>' + corte_fem_lat + ' mm</b>. Diferencia: ' + Math.abs(corte_fem_med - corte_fem_lat) + ' mm ≈ ' + ajuste_f + '° de corrección.';
+        } else {
+          // Cóndilos sanos: cortar más lateral distal
+          corte_fem_lat += ajuste_f;
+          femur_lat_estado = 'aumentado';
+          femur_rationale_text += ' <b>Corrección +' + delta_femur.toFixed(1) + '° (hacia varo):</b> aumentar resección distal lateral en ' + ajuste_f + ' mm → lateral queda en <b>' + corte_fem_lat + ' mm</b>, medial se mantiene en <b>' + corte_fem_med + ' mm</b>. Diferencia de ' + (corte_fem_lat - corte_fem_med) + ' mm ≈ ' + ajuste_f + '° de corrección.';
+        }
+      } else {
+        // Hacia valgo (LDFA baja)
+        if (ahka_tipo === 'Valgo'){
+          // Reducir lateral hipoplásico aún más (raro) o cortar más medial intacto
+          corte_fem_med += ajuste_f;
+          femur_med_estado = 'aumentado';
+          femur_rationale_text += ' <b>Corrección ' + delta_femur.toFixed(1) + '° (hacia valgo):</b> aumentar resección distal medial en ' + ajuste_f + ' mm → medial queda en <b>' + corte_fem_med + ' mm</b>, lateral se mantiene en <b>' + corte_fem_lat + ' mm</b>.';
+        } else {
+          // Cóndilos sanos: cortar más medial distal
+          corte_fem_med += ajuste_f;
+          femur_med_estado = 'aumentado';
+          femur_rationale_text += ' <b>Corrección ' + delta_femur.toFixed(1) + '° (hacia valgo):</b> aumentar resección distal medial en ' + ajuste_f + ' mm → medial queda en <b>' + corte_fem_med + ' mm</b>, lateral se mantiene en <b>' + corte_fem_lat + ' mm</b>. Diferencia: ' + (corte_fem_med - corte_fem_lat) + ' mm ≈ ' + ajuste_f + '° de corrección.';
+        }
+      }
+    }
+
+    // ===== CORTES POSTERIORES =====
+    let post_med = 9, post_lat = 9;
+    let postmed_estado = 'intacto', postlat_estado = 'intacto';
+    let postfem_rationale_text = '', postfem_badge_text = '';
+
+    if (ahka_tipo === 'Valgo'){
+      post_lat = 7;
+      postlat_estado = 'reducido';
+      postfem_badge_text = 'Valgo · desgaste posterolateral';
+      postfem_rationale_text = '<b>Lógica:</b> en valgo hay frecuente desgaste/hipoplasia posterolateral. Posterior medial = <b>9 mm</b> (referencia PCA, igual al grosor del componente femoral posterior). Posterior lateral = <b>7 mm</b> (el implante restablece los 2 mm faltantes). <b>Validar con probe</b> antes de cortar.';
+    } else if (ahka_tipo === 'Varo'){
+      postfem_badge_text = 'Varo · referencia PCA bilateral';
+      postfem_rationale_text = '<b>Lógica:</b> el desgaste en varo suele ser distal-medial, no posterior. Resección <b>9 mm bilateral</b> desde el eje condilar posterior (PCA). Si hay desgaste posteromedial focal, considerar 7-8 mm medial.';
+    } else {
+      postfem_badge_text = 'Neutro · PCA simétrico';
+      postfem_rationale_text = '<b>Lógica:</b> resección <b>9 mm bilateral</b> desde PCA. Equivale al grosor del componente posterior del implante.';
+    }
+
+    // ===== SLOPE TIBIAL =====
+    let slope = 3, slope_note = '';
+    slope_note = 'CR: 3-5° (preservar slope nativo si LCP íntegro). PS: 0-2°.';
+    if (def === 'severo' || def === 'moderado'){
+      slope = 5;
+      slope_note = 'Defecto óseo: aumentar a 5° facilita flexión y reduce shear.';
+    }
+
+    // ===== ROTACIÓN FEMORAL =====
+    let rot_text = 'PCA neutra', rot_note = 'Referencia PCA: 9 mm medial y lateral simétricos.';
+    if (ahka_tipo === 'Valgo'){
+      rot_text = 'PCA + 2-3° ER';
+      rot_note = 'Hipoplasia condilar posterolateral: 2-3° ER respecto a PCA. Validar con TEA + Whiteside.';
+    } else if (Math.abs(delta_femur) > 4){
+      rot_text = 'Validar con TEA';
+      rot_note = 'Corrección femoral grande: confirmar rotación con eje epicondilar transverso.';
+    }
+
+    // ===== DIBUJAR SVG =====
+    function colorEstado(estado){
+      if (estado === 'intacto') return 'var(--success-strong)';
+      if (estado === 'reducido') return 'var(--warning-strong)';
+      if (estado === 'aumentado') return 'var(--info-text)';
+      return 'var(--text-sec)';
+    }
+
+    // ===== VISTA CORONAL COMPLETA DEL IMPLANTE =====
+    function dibujarImplante(){
+      const svg = $('implant_svg');
+      const W = 500, H = 460;
+      const cx = W / 2;
+
+      // ============================================================
+      // LÓGICA DEFINITIVA (confirmada por el cirujano):
+      //
+      // 1. Línea articular FEMORAL: inclinada (90 - LDFA)°
+      //    Borde superior del fémur (cadera): horizontal
+      //
+      // 2. Línea articular TIBIAL: inclinada (90 - MPTA)°
+      //    Borde inferior de la tibia (tobillo): horizontal
+      //
+      // 3. Las dos líneas articulares se POSICIONAN PARALELAS entre sí:
+      //    - Se respeta la inclinación FEMORAL
+      //    - El TRAPECIO TIBIAL se rota como bloque para que su línea articular
+      //      quede paralela a la femoral
+      //    - El tobillo se desplaza lateralmente (visualiza el aHKA)
+      //    - Si LDFA = MPTA → rotación 0 → tobillo en cx → eje recto
+      //    - Si LDFA ≠ MPTA → rotación = diferencia → tobillo desplazado
+      //
+      // 4. Línea roja (eje mecánico):
+      //    - Fémur: centro cadera → centro línea articular femoral
+      //    - Tibia: centro línea articular tibial → centro tobillo desplazado
+      //    - Ángulo entre ambas en la zona articular = aHKA
+      // ============================================================
+
+      const hipY = 50;
+      const ankleY = 410;
+      const kneeY = 230;
+      const gapArt = 6;
+
+      const hipHalfW = 28;
+      const kneeHalfW = 45;
+      const ankleHalfW = 24;
+
+      const medialSignPantalla = esDerecha ? 1 : -1;
+
+      // ============================================================
+      // ÁNGULOS DE INCLINACIÓN
+      // ============================================================
+      // (90 - X) signed:
+      //   X < 90 (varo): positivo → medial bajo
+      //   X > 90 (valgo): negativo → medial alto
+      // En pantalla:
+      //   medial bajo en derecha (medialSign=+1): pantalla derecha (+X) bajo
+      //   → yR - yL = +2 * tan(inc) * kneeHalfW (positivo)
+      //   en izquierda (medialSign=-1): pantalla izquierda (-X) bajo
+      //   → yR - yL = -2 * tan(inc) * kneeHalfW (negativo)
+      // Multiplicador: medialSignPantalla
+      
+      // Inclinaciones nativas
+      function incFem(ldfa_val){ return 90 - ldfa_val; }  // signed deg
+      function incTib(mpta_val){ return 90 - mpta_val; }  // signed deg
+      
+      // Cuánto rota la TIBIA en bloque para que su línea articular quede paralela a la femoral
+      // rotTib = incFem - incTib  (en grados signed)
+      // Si LDFA=MPTA: rotTib=0
+      // Si LDFA=87 y MPTA=76: rotTib = 3 - 14 = -11° (tibia rota CCW)
+      //   esto en pantalla:
+      //   - signo común (medialSignPantalla): para varo en derecha, rotación CW positiva
+      //   - Convertimos rotTib a rotación SVG con multiplicador medialSignPantalla
+      function rotTibPantalla(mpta_val, ldfa_val){
+        const diff = incFem(ldfa_val) - incTib(mpta_val);  // signed
+        // diff positivo = la línea articular tibial debe inclinarse "más hacia varo" que su nativo
+        // En pantalla derecha (medial=+X), "más varo" = pantalla derecha más baja = rotación CW positiva
+        return diff * medialSignPantalla;
+      }
+
+      // ============================================================
+      // POSICIÓN del Y de los extremos según inclinación (signed)
+      // ============================================================
+      function deltaYpx(incDeg){
+        // Cuánto sube/baja cada extremo (signed)
+        // En pantalla derecha (medial=+X): incDeg positivo (varo) → medial bajo → yR bajo
+        //   yR - yL = +tan(inc) * 2 * kneeHalfW
+        //   centro está en medio: yL = -tan(inc)*kneeHalfW, yR = +tan(inc)*kneeHalfW
+        // En izquierda (medial=-X): se invierte
+        return Math.tan(incDeg * Math.PI / 180) * kneeHalfW * medialSignPantalla;
+      }
+
+      // ============================================================
+      // CONSTRUIR TRAPECIO FÉMUR
+      // ============================================================
+      // - Cadera (borde superior): HORIZONTAL, centrada en cx
+      // - Línea articular (borde inferior): inclinada según (90 - LDFA)
+      //   centrada en cx, kneeY - gapArt
+      function femurTrapezoid(ldfa_val){
+        const dy = deltaYpx(incFem(ldfa_val));
+        const artCenterY = kneeY - gapArt/2;
+        const v = [
+          {x: cx - hipHalfW, y: hipY},
+          {x: cx + hipHalfW, y: hipY},
+          {x: cx + kneeHalfW, y: artCenterY + dy},
+          {x: cx - kneeHalfW, y: artCenterY - dy}
+        ];
+        const path = 'M ' + v[0].x + ' ' + v[0].y +
+                     ' L ' + v[1].x + ' ' + v[1].y +
+                     ' L ' + v[2].x + ' ' + v[2].y +
+                     ' L ' + v[3].x + ' ' + v[3].y + ' Z';
+        return {
+          path: path,
+          topL: v[0], topR: v[1],
+          articL: v[3], articR: v[2],
+          centerTop: {x: cx, y: hipY},
+          centerArt: {x: cx, y: artCenterY}  // centro está en cx,artCenterY por construcción
+        };
+      }
+
+      // ============================================================
+      // CONSTRUIR TRAPECIO TIBIA
+      // ============================================================
+      // - Línea articular (borde superior): inclinada por (90-MPTA) en sistema nativo
+      //   pero rotamos todo el trapecio para que quede inclinada como la femoral
+      // - Tobillo (borde inferior): originalmente horizontal en cx, después rotado
+      //
+      // Estrategia:
+      // 1. Construir trapecio "nativo": línea articular inclinada (90-MPTA), tobillo horizontal en cx
+      // 2. Rotar todo el bloque alrededor del centro de la línea articular (cx, kneeY+gap/2)
+      //    por un ángulo rotTib = incFem - incTib (signed)
+      // 3. Resultado: línea articular del trapecio queda inclinada como la femoral
+      //    Tobillo se desplaza lateralmente
+      function rotarPunto(p, pivX, pivY, angDeg){
+        const rad = angDeg * Math.PI / 180;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        const dx = p.x - pivX;
+        const dy = p.y - pivY;
+        return {
+          x: pivX + dx * cos - dy * sin,
+          y: pivY + dx * sin + dy * cos
+        };
+      }
+
+      function tibiaTrapezoid(mpta_val, ldfa_val){
+        const dyNativo = deltaYpx(incTib(mpta_val));
+        const artCenterY = kneeY + gapArt/2;
+        // Vértices nativos (sin rotar)
+        const v_nativo = [
+          {x: cx - kneeHalfW, y: artCenterY - dyNativo},
+          {x: cx + kneeHalfW, y: artCenterY + dyNativo},
+          {x: cx + ankleHalfW, y: ankleY},
+          {x: cx - ankleHalfW, y: ankleY}
+        ];
+        // Ángulo de rotación: para que la línea articular quede igual que la femoral
+        const rotTib = rotTibPantalla(mpta_val, ldfa_val);
+        const pivX = cx;
+        const pivY = artCenterY;
+        const v = v_nativo.map(p => rotarPunto(p, pivX, pivY, rotTib));
+        const path = 'M ' + v[0].x + ' ' + v[0].y +
+                     ' L ' + v[1].x + ' ' + v[1].y +
+                     ' L ' + v[2].x + ' ' + v[2].y +
+                     ' L ' + v[3].x + ' ' + v[3].y + ' Z';
+        // Centro del tobillo desplazado por la rotación
+        const centerBot_nat = {x: cx, y: ankleY};
+        const centerBot_rot = rotarPunto(centerBot_nat, pivX, pivY, rotTib);
+        return {
+          path: path,
+          articL: v[0], articR: v[1],
+          botL: v[3], botR: v[2],
+          centerArt: {x: cx, y: artCenterY},  // se mantiene en cx por ser pivote
+          centerBot: centerBot_rot
+        };
+      }
+
+      // ============================================================
+      // CÁLCULOS
+      // ============================================================
+      const femPre = femurTrapezoid(ldfa);
+      const tibPre = tibiaTrapezoid(mpta, ldfa);
+      const femPost = femurTrapezoid(ldfa_plan);
+      const tibPost = tibiaTrapezoid(mpta_plan, ldfa_plan);
+
+      // ============================================================
+      // EJE MECÁNICO ROJO
+      // - Fémur: centro cadera → centro línea articular femoral
+      // - Tibia: centro línea articular tibial → centro tobillo (desplazado)
+      // ============================================================
+      function ejeMecanico(fem, tib, color){
+        return '<line x1="' + fem.centerTop.x + '" y1="' + fem.centerTop.y +
+                     '" x2="' + fem.centerArt.x + '" y2="' + fem.centerArt.y +
+                     '" stroke="' + color + '" stroke-width="2.5"/>' +
+               '<line x1="' + tib.centerArt.x + '" y1="' + tib.centerArt.y +
+                     '" x2="' + tib.centerBot.x + '" y2="' + tib.centerBot.y +
+                     '" stroke="' + color + '" stroke-width="2.5"/>' +
+               '<circle cx="' + fem.centerTop.x + '" cy="' + fem.centerTop.y + '" r="4.5" fill="' + color + '"/>' +
+               '<circle cx="' + tib.centerBot.x + '" cy="' + tib.centerBot.y + '" r="4.5" fill="' + color + '"/>';
+      }
+
+      // ============================================================
+      // RENDERIZADO
+      // ============================================================
+      const mode = window._implant_view || 'after';
+      let s = '';
+
+      const medX = esDerecha ? (cx + 160) : (cx - 160);
+      const latX = esDerecha ? (cx - 160) : (cx + 160);
+      s += '<text x="' + medX + '" y="22" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-sec)" font-family="-apple-system, sans-serif">MEDIAL</text>';
+      s += '<text x="' + latX + '" y="22" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-sec)" font-family="-apple-system, sans-serif">LATERAL</text>';
+      s += '<text x="' + (W - 12) + '" y="22" text-anchor="end" font-size="12" font-weight="600" fill="var(--teal-text)" font-family="-apple-system, sans-serif">' + (esDerecha ? 'R · DERECHA' : 'L · IZQUIERDA') + '</text>';
+
+      s += '<text x="10" y="' + (hipY + 5) + '" font-size="10" fill="var(--text-ter)" font-family="-apple-system, sans-serif">Cadera</text>';
+      s += '<text x="10" y="' + (kneeY + 5) + '" font-size="10" fill="var(--text-ter)" font-family="-apple-system, sans-serif">Rodilla</text>';
+      s += '<text x="10" y="' + (ankleY + 5) + '" font-size="10" fill="var(--text-ter)" font-family="-apple-system, sans-serif">Tobillo</text>';
+
+      if (mode === 'before'){
+        s += '<path d="' + femPre.path + '" fill="#4a7bd9" stroke="#2a5cb8" stroke-width="1.8"/>';
+        s += '<path d="' + tibPre.path + '" fill="#4a7bd9" stroke="#2a5cb8" stroke-width="1.8"/>';
+
+        s += ejeMecanico(femPre, tibPre, '#dc3545');
+
+        const lblMedX = esDerecha ? (W - 90) : 14;
+        const lblLatX = esDerecha ? 14 : (W - 90);
+        const tib_med_y = esDerecha ? tibPre.articR.y : tibPre.articL.y;
+        const fem_lat_y = esDerecha ? femPre.articL.y : femPre.articR.y;
+        s += '<text x="' + lblMedX + '" y="' + (tib_med_y + 18) + '" font-size="11" font-weight="600" fill="var(--text)" font-family="-apple-system, sans-serif">MPTA ' + mpta + '°</text>';
+        s += '<text x="' + lblLatX + '" y="' + (fem_lat_y - 6) + '" font-size="11" font-weight="600" fill="var(--text)" font-family="-apple-system, sans-serif">LDFA ' + ldfa + '°</text>';
+
+        const ejeLabel = Math.abs(ahka).toFixed(1) + '° ' + (ahka < 0 ? 'varo' : (ahka > 0 ? 'valgo' : 'neutro'));
+        s += '<text x="' + cx + '" y="' + (ankleY + 32) + '" text-anchor="middle" font-size="12" font-weight="600" fill="#dc3545" font-family="-apple-system, sans-serif">Eje pre: ' + ejeLabel + '</text>';
+
+      } else if (mode === 'after'){
+        s += '<path d="' + femPost.path + '" fill="#4a7bd9" stroke="#2a5cb8" stroke-width="1.8"/>';
+        s += '<path d="' + tibPost.path + '" fill="#4a7bd9" stroke="#2a5cb8" stroke-width="1.8"/>';
+
+        // IMPLANTE: paralelogramo entre las dos líneas articulares (que ya son paralelas)
+        const implPath = 'M ' + femPost.articL.x + ' ' + femPost.articL.y +
+                         ' L ' + femPost.articR.x + ' ' + femPost.articR.y +
+                         ' L ' + tibPost.articR.x + ' ' + tibPost.articR.y +
+                         ' L ' + tibPost.articL.x + ' ' + tibPost.articL.y + ' Z';
+        s += '<path d="' + implPath + '" fill="#888" stroke="#444" stroke-width="1.5"/>';
+
+        const intfL = {
+          x: femPost.articL.x + (tibPost.articL.x - femPost.articL.x) * 0.4,
+          y: femPost.articL.y + (tibPost.articL.y - femPost.articL.y) * 0.4
+        };
+        const intfR = {
+          x: femPost.articR.x + (tibPost.articR.x - femPost.articR.x) * 0.4,
+          y: femPost.articR.y + (tibPost.articR.y - femPost.articR.y) * 0.4
+        };
+        s += '<line x1="' + intfL.x + '" y1="' + intfL.y + '" x2="' + intfR.x + '" y2="' + intfR.y + '" stroke="#fff" stroke-width="1" stroke-dasharray="3,2" opacity="0.7"/>';
+
+        s += ejeMecanico(femPost, tibPost, '#dc3545');
+
+        const lblMedX = esDerecha ? (W - 90) : 14;
+        const lblLatX = esDerecha ? 14 : (W - 90);
+        const tib_med_y = esDerecha ? tibPost.articR.y : tibPost.articL.y;
+        const fem_lat_y = esDerecha ? femPost.articL.y : femPost.articR.y;
+        s += '<text x="' + lblMedX + '" y="' + (tib_med_y + 18) + '" font-size="11" font-weight="600" fill="var(--text)" font-family="-apple-system, sans-serif">MPTA ' + mpta_plan.toFixed(1) + '°</text>';
+        s += '<text x="' + lblLatX + '" y="' + (fem_lat_y - 6) + '" font-size="11" font-weight="600" fill="var(--text)" font-family="-apple-system, sans-serif">LDFA ' + ldfa_plan.toFixed(1) + '°</text>';
+
+        const ejeLabel = Math.abs(ahka_plan).toFixed(1) + '° ' + (ahka_plan < -0.1 ? 'varo' : (ahka_plan > 0.1 ? 'valgo' : 'neutro'));
+        s += '<text x="' + cx + '" y="' + (ankleY + 32) + '" text-anchor="middle" font-size="12" font-weight="600" fill="#dc3545" font-family="-apple-system, sans-serif">Eje post: ' + ejeLabel + '</text>';
+
+      } else {
+        s += '<path d="' + femPre.path + '" fill="rgba(74,123,217,0.22)" stroke="#2a5cb8" stroke-width="1" opacity="0.6"/>';
+        s += '<path d="' + tibPre.path + '" fill="rgba(74,123,217,0.22)" stroke="#2a5cb8" stroke-width="1" opacity="0.6"/>';
+
+        s += '<path d="' + femPost.path + '" fill="#4a7bd9" stroke="#2a5cb8" stroke-width="1.8"/>';
+        s += '<path d="' + tibPost.path + '" fill="#4a7bd9" stroke="#2a5cb8" stroke-width="1.8"/>';
+
+        const implPath = 'M ' + femPost.articL.x + ' ' + femPost.articL.y +
+                         ' L ' + femPost.articR.x + ' ' + femPost.articR.y +
+                         ' L ' + tibPost.articR.x + ' ' + tibPost.articR.y +
+                         ' L ' + tibPost.articL.x + ' ' + tibPost.articL.y + ' Z';
+        s += '<path d="' + implPath + '" fill="#888" stroke="#444" stroke-width="1.5"/>';
+
+        s += ejeMecanico(femPost, tibPost, '#dc3545');
+
+        const ejeLabel_pre = Math.abs(ahka).toFixed(1) + '° ' + (ahka < 0 ? 'varo' : (ahka > 0 ? 'valgo' : 'neutro'));
+        const ejeLabel_post = Math.abs(ahka_plan).toFixed(1) + '° ' + (ahka_plan < -0.1 ? 'varo' : (ahka_plan > 0.1 ? 'valgo' : 'neutro'));
+        s += '<text x="14" y="' + (ankleY + 32) + '" font-size="11" font-weight="600" fill="#2a5cb8" opacity="0.7" font-family="-apple-system, sans-serif">Pre: ' + ejeLabel_pre + '</text>';
+        s += '<text x="' + (W - 14) + '" y="' + (ankleY + 32) + '" text-anchor="end" font-size="11" font-weight="600" fill="#dc3545" font-family="-apple-system, sans-serif">Post: ' + ejeLabel_post + '</text>';
+      }
+
+      svg.innerHTML = s;
+
+      const ahka_pre_text = Math.abs(ahka).toFixed(1) + '° ' + (ahka < -0.1 ? 'varo' : (ahka > 0.1 ? 'valgo' : 'neutro'));
+      const ahka_post_text = Math.abs(ahka_plan).toFixed(1) + '° ' + (ahka_plan < -0.1 ? 'varo' : (ahka_plan > 0.1 ? 'valgo' : 'neutro'));
+      $('impl_ahka_pre').textContent = ahka_pre_text;
+      $('impl_ahka_post').textContent = ahka_post_text;
+      $('impl_jlo_pre').textContent = jlo.toFixed(1) + '° (' + jlo_tipo.toLowerCase() + ')';
+      $('impl_jlo_post').textContent = jlo_plan.toFixed(1) + '° (' + jlo_plan_tipo + ')';
+
+      const jl_change = (jlo_plan - jlo);
+      let jl_change_text = '';
+      if (Math.abs(jl_change) < 0.5) jl_change_text = 'Preservada';
+      else if (jl_change > 0) jl_change_text = '+' + jl_change.toFixed(1) + '° (más proximal)';
+      else jl_change_text = jl_change.toFixed(1) + '° (más distal)';
+      $('impl_jl_change').textContent = jl_change_text;
+    }
+
+    function dibujarTibia(){
+      const svg = $('tibia_svg');
+      const W = 400, H = 130;
+      const bone_top = 25, bone_bot = 110;
+      const bone_left = 60, bone_right = 340;
+      const cx = (bone_left + bone_right) / 2;
+      // Posición medial/lateral según lado
+      const med_x = esDerecha ? (bone_right - 60) : (bone_left + 60);
+      const lat_x = esDerecha ? (bone_left + 60) : (bone_right - 60);
+      const med_side_x = esDerecha ? bone_right : bone_left;  // borde del lado medial (convención AP)
+      const lat_side_x = esDerecha ? bone_left : bone_right;  // borde del lado lateral
+      const mmToPx = 5;
+
+      // Líneas de corte: cada lado del hueso tiene su altura de corte
+      const med_cut_y = bone_top + corte_tib_med * mmToPx;
+      const lat_cut_y = bone_top + corte_tib_lat * mmToPx;
+
+      const med_color = colorEstado(tibia_med_estado);
+      const lat_color = colorEstado(tibia_lat_estado);
+
+      let svgContent = '';
+
+      // Eje vertical
+      svgContent += '<line x1="' + cx + '" y1="10" x2="' + cx + '" y2="' + (H - 5) + '" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2,2"/>';
+      svgContent += '<text x="' + cx + '" y="9" text-anchor="middle" font-size="8" fill="var(--text-ter)" font-family="-apple-system, sans-serif">eje mecánico</text>';
+
+      // Meseta tibial con escalón según fenotipo y lado
+      // El lado colapsado siempre está MÁS BAJO en superficie nativa (Y mayor)
+      let topSurface;
+      const colapso_px = (BASE_INTACTO - BASE_COLAPSADO) * mmToPx;
+      // Determinar si medial o lateral está colapsado
+      const medColapsado = (ahka_tipo === 'Varo');
+      const latColapsado = (ahka_tipo === 'Valgo');
+
+      // medial_y_nativo y lateral_y_nativo
+      const med_native_y = medColapsado ? (bone_top + colapso_px) : bone_top;
+      const lat_native_y = latColapsado ? (bone_top + colapso_px) : bone_top;
+
+      // Dibujar superficie superior según lado
+      if (esDerecha){
+        // Medial está a la izquierda
+        topSurface = 'M ' + bone_left + ' ' + med_native_y + ' L ' + cx + ' ' + med_native_y + ' L ' + cx + ' ' + lat_native_y + ' L ' + bone_right + ' ' + lat_native_y;
+      } else {
+        // Medial está a la derecha
+        topSurface = 'M ' + bone_left + ' ' + lat_native_y + ' L ' + cx + ' ' + lat_native_y + ' L ' + cx + ' ' + med_native_y + ' L ' + bone_right + ' ' + med_native_y;
+      }
+
+      svgContent += '<path d="' + topSurface + ' L ' + bone_right + ' ' + (bone_bot - 25) + ' Q ' + bone_right + ' ' + bone_bot + ' ' + (bone_right - 30) + ' ' + bone_bot + ' L ' + (bone_left + 30) + ' ' + bone_bot + ' Q ' + bone_left + ' ' + bone_bot + ' ' + bone_left + ' ' + (bone_bot - 25) + ' Z" fill="var(--surface-2)" stroke="var(--text-sec)" stroke-width="1"/>';
+
+      // Líneas de corte (a la altura correspondiente al lado)
+      // Lado medial: dibujar línea desde med_side_x hasta cx
+      const medStart = Math.min(med_side_x, cx);
+      const medEnd = Math.max(med_side_x, cx);
+      const latStart = Math.min(lat_side_x, cx);
+      const latEnd = Math.max(lat_side_x, cx);
+
+      svgContent += '<line x1="' + medStart + '" y1="' + med_cut_y + '" x2="' + medEnd + '" y2="' + med_cut_y + '" stroke="' + med_color + '" stroke-width="2.5" stroke-dasharray="5,2"/>';
+      svgContent += '<line x1="' + latStart + '" y1="' + lat_cut_y + '" x2="' + latEnd + '" y2="' + lat_cut_y + '" stroke="' + lat_color + '" stroke-width="2.5" stroke-dasharray="5,2"/>';
+
+      // Conector central
+      if (Math.abs(med_cut_y - lat_cut_y) > 1){
+        svgContent += '<line x1="' + cx + '" y1="' + med_cut_y + '" x2="' + cx + '" y2="' + lat_cut_y + '" stroke="var(--text-ter)" stroke-width="0.8" stroke-dasharray="2,2"/>';
+      }
+
+      // Flechas verticales con mm (desde superficie nativa hasta línea de corte)
+      // Apuntan hacia afuera del hueso (hacia el borde del SVG)
+      // En convención AP: medial (derecha de pantalla en derecha) → flecha a la derecha; lateral (izquierda) → flecha a la izquierda
+      // Medial
+      const med_arrow_x = esDerecha ? (med_x + 38) : (med_x - 38);
+      const med_tick_x1 = med_arrow_x - 4;
+      const med_tick_x2 = med_arrow_x + 4;
+      const med_text_x = esDerecha ? (med_x + 42) : (med_x - 32);
+      svgContent += '<line x1="' + med_arrow_x + '" y1="' + med_native_y + '" x2="' + med_arrow_x + '" y2="' + med_cut_y + '" stroke="' + med_color + '" stroke-width="1.5" marker-end="url(#arrow_tmed)"/>';
+      svgContent += '<line x1="' + med_tick_x1 + '" y1="' + med_native_y + '" x2="' + med_tick_x2 + '" y2="' + med_native_y + '" stroke="' + med_color + '" stroke-width="1.5"/>';
+      svgContent += '<text x="' + med_text_x + '" y="' + ((med_native_y + med_cut_y) / 2 + 4) + '" font-size="13" font-weight="600" fill="' + med_color + '" font-family="-apple-system, sans-serif">' + corte_tib_med + ' mm</text>';
+
+      // Lateral
+      const lat_arrow_x = esDerecha ? (lat_x - 38) : (lat_x + 38);
+      const lat_tick_x1 = lat_arrow_x - 4;
+      const lat_tick_x2 = lat_arrow_x + 4;
+      const lat_text_x = esDerecha ? (lat_x - 32) : (lat_x + 42);
+      svgContent += '<line x1="' + lat_arrow_x + '" y1="' + lat_native_y + '" x2="' + lat_arrow_x + '" y2="' + lat_cut_y + '" stroke="' + lat_color + '" stroke-width="1.5" marker-end="url(#arrow_tlat)"/>';
+      svgContent += '<line x1="' + lat_tick_x1 + '" y1="' + lat_native_y + '" x2="' + lat_tick_x2 + '" y2="' + lat_native_y + '" stroke="' + lat_color + '" stroke-width="1.5"/>';
+      svgContent += '<text x="' + lat_text_x + '" y="' + ((lat_native_y + lat_cut_y) / 2 + 4) + '" font-size="13" font-weight="600" fill="' + lat_color + '" font-family="-apple-system, sans-serif">' + corte_tib_lat + ' mm</text>';
+
+      // M / L labels (en los bordes del hueso según lado, convención AP)
+      const M_label_x = esDerecha ? (bone_right - 16) : (bone_left + 8);
+      const L_label_x = esDerecha ? (bone_left + 8) : (bone_right - 16);
+      svgContent += '<text x="' + M_label_x + '" y="' + (bone_bot - 8) + '" font-size="11" font-weight="600" fill="var(--text-sec)" font-family="-apple-system, sans-serif">M</text>';
+      svgContent += '<text x="' + L_label_x + '" y="' + (bone_bot - 8) + '" font-size="11" font-weight="600" fill="var(--text-sec)" font-family="-apple-system, sans-serif">L</text>';
+
+      // Indicador colapso
+      if (medColapsado){
+        svgContent += '<text x="' + med_x + '" y="' + (bone_bot - 8) + '" text-anchor="middle" font-size="9" fill="var(--warning-strong)" font-family="-apple-system, sans-serif">▼ colapso</text>';
+      }
+      if (latColapsado){
+        svgContent += '<text x="' + lat_x + '" y="' + (bone_bot - 8) + '" text-anchor="middle" font-size="9" fill="var(--warning-strong)" font-family="-apple-system, sans-serif">▼ colapso</text>';
+      }
+
+      // Etiqueta lado
+      const ladoCorto = esDerecha ? 'R' : 'L';
+      svgContent += '<text x="' + (W - 8) + '" y="14" text-anchor="end" font-size="10" font-weight="600" fill="var(--teal-text)" font-family="-apple-system, sans-serif">' + ladoCorto + '</text>';
+
+      svgContent += '<defs>';
+      svgContent += '<marker id="arrow_tmed" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="' + med_color + '"/></marker>';
+      svgContent += '<marker id="arrow_tlat" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="' + lat_color + '"/></marker>';
+      svgContent += '</defs>';
+
+      svg.innerHTML = svgContent;
+    }
+
+    function dibujarFemur(){
+      const svg = $('femur_svg');
+      const W = 400, H = 130;
+      const bone_top = 20, bone_bot = 100;
+      const bone_left = 60, bone_right = 340;
+      const cx = (bone_left + bone_right) / 2;
+      const med_x = esDerecha ? (bone_right - 60) : (bone_left + 60);
+      const lat_x = esDerecha ? (bone_left + 60) : (bone_right - 60);
+      const mmToPx = 5;
+
+      const med_cut_y = bone_bot - corte_fem_med * mmToPx;
+      const lat_cut_y = bone_bot - corte_fem_lat * mmToPx;
+
+      const med_color = colorEstado(femur_med_estado);
+      const lat_color = colorEstado(femur_lat_estado);
+
+      const hipoplasiaLateral = (ahka_tipo === 'Valgo');
+      const hipo_px = (BASE_INTACTO - BASE_COLAPSADO) * mmToPx;
+      const med_native_y = bone_bot;
+      const lat_native_y = hipoplasiaLateral ? (bone_bot - hipo_px) : bone_bot;
+
+      let svgContent = '';
+
+      // Eje
+      svgContent += '<line x1="' + cx + '" y1="10" x2="' + cx + '" y2="' + (H - 5) + '" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2,2"/>';
+      svgContent += '<text x="' + cx + '" y="9" text-anchor="middle" font-size="8" fill="var(--text-ter)" font-family="-apple-system, sans-serif">eje mecánico</text>';
+
+      // Fémur distal con escalón si hipoplasia lateral, dibujar respetando lado
+      let bottomSurface;
+      if (hipoplasiaLateral){
+        if (esDerecha){
+          // Medial izq (normal bone_bot), lateral der (más alto bone_bot - hipo_px)
+          bottomSurface = 'M ' + bone_left + ' ' + bone_top + ' Q ' + bone_left + ' ' + bone_bot + ' ' + (bone_left + 50) + ' ' + bone_bot + ' L ' + (cx - 20) + ' ' + bone_bot + ' L ' + cx + ' ' + (bone_bot - 12) + ' L ' + (cx + 20) + ' ' + (bone_bot - hipo_px) + ' L ' + (bone_right - 50) + ' ' + (bone_bot - hipo_px) + ' Q ' + bone_right + ' ' + (bone_bot - hipo_px) + ' ' + bone_right + ' ' + bone_top + ' Z';
+        } else {
+          // Medial derecha (normal), lateral izq (más alto)
+          bottomSurface = 'M ' + bone_left + ' ' + bone_top + ' Q ' + bone_left + ' ' + (bone_bot - hipo_px) + ' ' + (bone_left + 50) + ' ' + (bone_bot - hipo_px) + ' L ' + (cx - 20) + ' ' + (bone_bot - hipo_px) + ' L ' + cx + ' ' + (bone_bot - 12) + ' L ' + (cx + 20) + ' ' + bone_bot + ' L ' + (bone_right - 50) + ' ' + bone_bot + ' Q ' + bone_right + ' ' + bone_bot + ' ' + bone_right + ' ' + bone_top + ' Z';
+        }
+      } else {
+        bottomSurface = 'M ' + bone_left + ' ' + bone_top + ' Q ' + bone_left + ' ' + bone_bot + ' ' + (bone_left + 50) + ' ' + bone_bot + ' L ' + (cx - 20) + ' ' + bone_bot + ' L ' + cx + ' ' + (bone_bot - 12) + ' L ' + (cx + 20) + ' ' + bone_bot + ' L ' + (bone_right - 50) + ' ' + bone_bot + ' Q ' + bone_right + ' ' + bone_bot + ' ' + bone_right + ' ' + bone_top + ' Z';
+      }
+
+      svgContent += '<path d="' + bottomSurface + '" fill="var(--surface-2)" stroke="var(--text-sec)" stroke-width="1"/>';
+
+      // Líneas de corte (en el lado correspondiente)
+      const medStart = Math.min(esDerecha ? bone_left : cx, esDerecha ? cx : bone_right);
+      const medEnd = Math.max(esDerecha ? bone_left : cx, esDerecha ? cx : bone_right);
+      const latStart = Math.min(esDerecha ? cx : bone_left, esDerecha ? bone_right : cx);
+      const latEnd = Math.max(esDerecha ? cx : bone_left, esDerecha ? bone_right : cx);
+
+      svgContent += '<line x1="' + medStart + '" y1="' + med_cut_y + '" x2="' + medEnd + '" y2="' + med_cut_y + '" stroke="' + med_color + '" stroke-width="2.5" stroke-dasharray="5,2"/>';
+      svgContent += '<line x1="' + latStart + '" y1="' + lat_cut_y + '" x2="' + latEnd + '" y2="' + lat_cut_y + '" stroke="' + lat_color + '" stroke-width="2.5" stroke-dasharray="5,2"/>';
+
+      if (Math.abs(med_cut_y - lat_cut_y) > 1){
+        svgContent += '<line x1="' + cx + '" y1="' + med_cut_y + '" x2="' + cx + '" y2="' + lat_cut_y + '" stroke="var(--text-ter)" stroke-width="0.8" stroke-dasharray="2,2"/>';
+      }
+
+      // Flechas desde superficie nativa hasta corte (convención AP: hacia afuera del hueso)
+      const med_arrow_x = esDerecha ? (med_x + 38) : (med_x - 38);
+      const med_tick_x1 = med_arrow_x - 4;
+      const med_tick_x2 = med_arrow_x + 4;
+      const med_text_x = esDerecha ? (med_x + 42) : (med_x - 32);
+      svgContent += '<line x1="' + med_arrow_x + '" y1="' + med_cut_y + '" x2="' + med_arrow_x + '" y2="' + med_native_y + '" stroke="' + med_color + '" stroke-width="1.5" marker-end="url(#arrow_fmed)"/>';
+      svgContent += '<line x1="' + med_tick_x1 + '" y1="' + med_native_y + '" x2="' + med_tick_x2 + '" y2="' + med_native_y + '" stroke="' + med_color + '" stroke-width="1.5"/>';
+      svgContent += '<text x="' + med_text_x + '" y="' + ((med_native_y + med_cut_y) / 2 + 4) + '" font-size="13" font-weight="600" fill="' + med_color + '" font-family="-apple-system, sans-serif">' + corte_fem_med + ' mm</text>';
+
+      const lat_arrow_x = esDerecha ? (lat_x - 38) : (lat_x + 38);
+      const lat_tick_x1 = lat_arrow_x - 4;
+      const lat_tick_x2 = lat_arrow_x + 4;
+      const lat_text_x = esDerecha ? (lat_x - 32) : (lat_x + 42);
+      svgContent += '<line x1="' + lat_arrow_x + '" y1="' + lat_cut_y + '" x2="' + lat_arrow_x + '" y2="' + lat_native_y + '" stroke="' + lat_color + '" stroke-width="1.5" marker-end="url(#arrow_flat)"/>';
+      svgContent += '<line x1="' + lat_tick_x1 + '" y1="' + lat_native_y + '" x2="' + lat_tick_x2 + '" y2="' + lat_native_y + '" stroke="' + lat_color + '" stroke-width="1.5"/>';
+      svgContent += '<text x="' + lat_text_x + '" y="' + ((lat_native_y + lat_cut_y) / 2 + 4) + '" font-size="13" font-weight="600" fill="' + lat_color + '" font-family="-apple-system, sans-serif">' + corte_fem_lat + ' mm</text>';
+
+      // M / L (convención AP: derecha → medial=derecha pantalla)
+      const M_label_x = esDerecha ? (bone_right - 16) : (bone_left + 8);
+      const L_label_x = esDerecha ? (bone_left + 8) : (bone_right - 16);
+      svgContent += '<text x="' + M_label_x + '" y="' + (bone_top + 14) + '" font-size="11" font-weight="600" fill="var(--text-sec)" font-family="-apple-system, sans-serif">M</text>';
+      svgContent += '<text x="' + L_label_x + '" y="' + (bone_top + 14) + '" font-size="11" font-weight="600" fill="var(--text-sec)" font-family="-apple-system, sans-serif">L</text>';
+
+      if (hipoplasiaLateral){
+        svgContent += '<text x="' + lat_x + '" y="' + (bone_bot - 18) + '" text-anchor="middle" font-size="9" fill="var(--warning-strong)" font-family="-apple-system, sans-serif">▲ hipoplásico</text>';
+      }
+
+      // Etiqueta lado
+      const ladoCorto = esDerecha ? 'R' : 'L';
+      svgContent += '<text x="' + (W - 8) + '" y="14" text-anchor="end" font-size="10" font-weight="600" fill="var(--teal-text)" font-family="-apple-system, sans-serif">' + ladoCorto + '</text>';
+
+      svgContent += '<defs>';
+      svgContent += '<marker id="arrow_fmed" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="' + med_color + '"/></marker>';
+      svgContent += '<marker id="arrow_flat" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="' + lat_color + '"/></marker>';
+      svgContent += '</defs>';
+
+      svg.innerHTML = svgContent;
+    }
+
+    function dibujarPostFemur(){
+      const svg = $('postfem_svg');
+      const W = 400, H = 130;
+      const cx = W / 2;
+      const med_x = esDerecha ? 270 : 130;
+      const lat_x = esDerecha ? 130 : 270;
+      const bone_top = 30, bone_bot = 100;
+
+      const mmToPx = 4;
+
+      // Cortes desde superficie posterior nativa
+      // Si medial está a la izquierda (derecha), el corte va de derecha a izquierda
+      // Si medial está a la derecha (izquierda), el corte va al revés
+      const med_cut_x = esDerecha ? (med_x + 35 - post_med * mmToPx) : (med_x - 35 + post_med * mmToPx);
+      const lat_cut_x = esDerecha ? (lat_x + 35 - post_lat * mmToPx) : (lat_x - 35 + post_lat * mmToPx);
+
+      // Línea PCA (eje condilar posterior)
+      const pca_x1 = esDerecha ? (med_x + 35) : (med_x - 35);
+      const pca_x2 = esDerecha ? (lat_x + 35) : (lat_x - 35);
+
+      const med_color = colorEstado(postmed_estado);
+      const lat_color = colorEstado(postlat_estado);
+
+      let svgContent = '';
+
+      // Cóndilos posteriores
+      svgContent += '<ellipse cx="' + med_x + '" cy="' + ((bone_top + bone_bot) / 2) + '" rx="35" ry="35" fill="var(--surface-2)" stroke="var(--text-sec)" stroke-width="1"/>';
+      svgContent += '<ellipse cx="' + lat_x + '" cy="' + ((bone_top + bone_bot) / 2) + '" rx="35" ry="35" fill="var(--surface-2)" stroke="var(--text-sec)" stroke-width="1"/>';
+
+      // PCA
+      svgContent += '<line x1="' + Math.min(pca_x1, pca_x2) + '" y1="' + bone_bot + '" x2="' + Math.max(pca_x1, pca_x2) + '" y2="' + bone_bot + '" stroke="var(--text-ter)" stroke-width="0.8" stroke-dasharray="3,2"/>';
+      svgContent += '<text x="' + cx + '" y="' + (bone_bot + 14) + '" text-anchor="middle" font-size="9" fill="var(--text-ter)" font-family="-apple-system, sans-serif">eje PCA (superficie posterior nativa)</text>';
+
+      // Líneas de corte verticales
+      svgContent += '<line x1="' + med_cut_x + '" y1="' + (bone_top - 5) + '" x2="' + med_cut_x + '" y2="' + (bone_bot + 5) + '" stroke="' + med_color + '" stroke-width="2.5" stroke-dasharray="5,2"/>';
+      svgContent += '<line x1="' + lat_cut_x + '" y1="' + (bone_top - 5) + '" x2="' + lat_cut_x + '" y2="' + (bone_bot + 5) + '" stroke="' + lat_color + '" stroke-width="2.5" stroke-dasharray="5,2"/>';
+
+      // Flechas horizontales mostrando mm
+      const med_pca_x = esDerecha ? (med_x + 35) : (med_x - 35);
+      const lat_pca_x = esDerecha ? (lat_x + 35) : (lat_x - 35);
+
+      svgContent += '<line x1="' + Math.min(med_cut_x, med_pca_x) + '" y1="' + (bone_top - 12) + '" x2="' + Math.max(med_cut_x, med_pca_x) + '" y2="' + (bone_top - 12) + '" stroke="' + med_color + '" stroke-width="1.5" marker-end="url(#arrow_pmed)" marker-start="url(#arrow_pmed_s)"/>';
+      svgContent += '<text x="' + ((med_cut_x + med_pca_x) / 2) + '" y="' + (bone_top - 16) + '" text-anchor="middle" font-size="13" font-weight="600" fill="' + med_color + '" font-family="-apple-system, sans-serif">' + post_med + ' mm</text>';
+
+      svgContent += '<line x1="' + Math.min(lat_cut_x, lat_pca_x) + '" y1="' + (bone_top - 12) + '" x2="' + Math.max(lat_cut_x, lat_pca_x) + '" y2="' + (bone_top - 12) + '" stroke="' + lat_color + '" stroke-width="1.5" marker-end="url(#arrow_plat)" marker-start="url(#arrow_plat_s)"/>';
+      svgContent += '<text x="' + ((lat_cut_x + lat_pca_x) / 2) + '" y="' + (bone_top - 16) + '" text-anchor="middle" font-size="13" font-weight="600" fill="' + lat_color + '" font-family="-apple-system, sans-serif">' + post_lat + ' mm</text>';
+
+      // M / L en centro de cada cóndilo
+      svgContent += '<text x="' + (med_x - 6) + '" y="' + ((bone_top + bone_bot) / 2 + 4) + '" font-size="14" font-weight="600" fill="var(--text-sec)" font-family="-apple-system, sans-serif">M</text>';
+      svgContent += '<text x="' + (lat_x - 5) + '" y="' + ((bone_top + bone_bot) / 2 + 4) + '" font-size="14" font-weight="600" fill="var(--text-sec)" font-family="-apple-system, sans-serif">L</text>';
+
+      if (postlat_estado === 'reducido'){
+        svgContent += '<text x="' + lat_x + '" y="' + (bone_bot + 26) + '" text-anchor="middle" font-size="9" fill="var(--warning-strong)" font-family="-apple-system, sans-serif">▼ desgaste posterolateral</text>';
+      }
+
+      // Etiqueta lado
+      const ladoCorto = esDerecha ? 'R' : 'L';
+      svgContent += '<text x="' + (W - 8) + '" y="14" text-anchor="end" font-size="10" font-weight="600" fill="var(--teal-text)" font-family="-apple-system, sans-serif">' + ladoCorto + '</text>';
+
+      svgContent += '<defs>';
+      svgContent += '<marker id="arrow_pmed" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="' + med_color + '"/></marker>';
+      svgContent += '<marker id="arrow_pmed_s" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 10 0 L 0 5 L 10 10 z" fill="' + med_color + '"/></marker>';
+      svgContent += '<marker id="arrow_plat" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="' + lat_color + '"/></marker>';
+      svgContent += '<marker id="arrow_plat_s" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 10 0 L 0 5 L 10 10 z" fill="' + lat_color + '"/></marker>';
+      svgContent += '</defs>';
+
+      svg.innerHTML = svgContent;
+    }
+
+    // Aplicar contenido
+    $('tibia_badge').textContent = tibia_badge_text;
+    $('tibia_med_mm').textContent = corte_tib_med;
+    $('tibia_lat_mm').textContent = corte_tib_lat;
+    $('tibia_med_box').className = 'cut-side ' + tibia_med_estado;
+    $('tibia_lat_box').className = 'cut-side ' + tibia_lat_estado;
+    $('tibia_rationale').innerHTML = tibia_rationale_text;
+    dibujarTibia();
+
+    $('femur_badge').textContent = femur_badge_text;
+    $('femur_med_mm').textContent = corte_fem_med;
+    $('femur_lat_mm').textContent = corte_fem_lat;
+    $('femur_med_box').className = 'cut-side ' + femur_med_estado;
+    $('femur_lat_box').className = 'cut-side ' + femur_lat_estado;
+    $('femur_rationale').innerHTML = femur_rationale_text;
+    dibujarFemur();
+
+    $('postfem_badge').textContent = postfem_badge_text;
+    $('postmed_mm').textContent = post_med;
+    $('postlat_mm').textContent = post_lat;
+    $('postmed_box').className = 'cut-side ' + postmed_estado;
+    $('postlat_box').className = 'cut-side ' + postlat_estado;
+    $('postfem_rationale').innerHTML = postfem_rationale_text;
+    dibujarPostFemur();
+
+    // Vista coronal del implante
+    $('lado_badge_implant').textContent = '— Rodilla ' + (esDerecha ? 'derecha' : 'izquierda');
+    dibujarImplante();
+
+    $('slope_tibial').textContent = slope + '°';
+    $('slope_tibial_note').textContent = slope_note;
+    $('rot_femoral').textContent = rot_text;
+    $('rot_femoral_note').textContent = rot_note;
+
+    // GAPS ESPERADOS (estimación basada en plan)
+    // En rKA: extensión medial 1-2mm, flexión lateral 3-7mm (laxitud fisiológica)
+    let gap_em = '1-2', gap_el = '1-2', gap_fm = '1-2', gap_fl = '3-7';
+
+    if (ahka_tipo === 'Varo' && Math.abs(delta_tibia) < 2){
+      gap_em = '1-2 (tenso)';
+      gap_el = '2-4';
+    }
+    if (ahka_tipo === 'Valgo' && Math.abs(delta_femur) < 3){
+      gap_em = '2-4';
+      gap_el = '1-2 (tenso)';
+    }
+
+    $('gap_ext_med').textContent = gap_em + ' mm';
+    $('gap_ext_lat').textContent = gap_el + ' mm';
+    $('gap_flex_med').textContent = gap_fm + ' mm';
+    $('gap_flex_lat').textContent = gap_fl + ' mm';
+
+    // SECUENCIA PASO A PASO
+    const pasos = [];
+
+    pasos.push('<b>Setup y exposición:</b> pines sólidos, navegador estable, exposición sin liberaciones tempranas. Preservar MCL profundo.');
+
+    pasos.push('<b>Resección osteofitos posteriores:</b> retirar antes de medir laxitudes — recuperan extensión y cambian gaps.');
+
+    pasos.push('<b>Landmarking subcondral:</b> registrar puntos en hueso, no en cartílago. Si erosión, descontar del plan.');
+
+    if (Math.abs(delta_tibia) > 0.5){
+      pasos.push('<b>Corte tibial planificado:</b> MPTA objetivo ' + mpta_plan.toFixed(1) + '°. Slope ' + slope + '°. Caliper: verificar resección ' + corte_tib_med + ' mm medial / ' + corte_tib_lat + ' mm lateral.');
+    } else {
+      pasos.push('<b>Corte tibial:</b> mantener MPTA ' + mpta_plan.toFixed(1) + '° nativo. Resección 8 mm desde cóndilo intacto, slope ' + slope + '°.');
+    }
+
+    if (Math.abs(delta_femur) > 0.5){
+      pasos.push('<b>Corte femoral distal:</b> LDFA objetivo ' + ldfa_plan.toFixed(1) + '°. Verificar con caliper Med ' + corte_fem_med + ' / Lat ' + corte_fem_lat.toFixed(0) + ' mm.');
+    } else {
+      pasos.push('<b>Corte femoral distal:</b> preservar LDFA nativo. Resección 8 mm desde cóndilo intacto.');
+    }
+
+    pasos.push('<b>Medir gaps en extensión:</b> objetivo medial 1-2 mm, lateral ' + gap_el + ' mm. Si asimetría >3 mm: ajustar antes de cortes posteriores.');
+
+    pasos.push('<b>Rotación femoral:</b> ' + rot_text + '. Posterior medial ' + post_med + ' mm, lateral ' + post_lat + ' mm.');
+
+    pasos.push('<b>Medir gaps en flexión:</b> objetivo medial 1-2 mm, lateral 3-7 mm (asimetría fisiológica esperada).');
+
+    pasos.push('<b>Pruebas con componentes de prueba:</b> validar tracking patelar, estabilidad medial completa, pivote lateral en flexión.');
+
+    if (ahka_tipo === 'Valgo' && mcl !== 'competente'){
+      pasos.push('<b>Si MCL incompetente:</b> escalar a implante semiconstreñido (CCK) preparado en pabellón.');
+    }
+
+    if (Math.abs(ahka_plan) > 3){
+      pasos.push('<b>Validar eje final:</b> telemetría intraoperatoria o navegación. Eje esperado: ' + Math.abs(ahka_plan).toFixed(1) + '° ' + (ahka_plan < 0 ? 'varo' : 'valgo') + '.');
+    }
+
+    pasos.push('<b>Cementado y cierre:</b> infiltración periarticular multimodal según protocolo. Hemostasia con TXA.');
+
+    $('secuencia_pasos').innerHTML = pasos.map(p => '<li>' + p + '</li>').join('');
+
+    // ============================================================
+    // PROBLEMAS ANTICIPADOS
+    // ============================================================
+    const problemas = [];
+
+    // Corrección tibial grande
+    if (Math.abs(delta_tibia) > 4){
+      problemas.push({
+        nivel: 'danger',
+        titulo: 'Corrección tibial >4° (' + Math.abs(delta_tibia).toFixed(1) + '°)',
+        sol: '<b>Riesgo:</b> over-resección en lado sano, JLO alterada, inestabilidad contralateral. <b>Solución:</b> dividir corrección entre tibia y fémur. Considerar liberación medial parcial en vez de cortar más hueso.'
+      });
+    } else if (Math.abs(delta_tibia) > 2){
+      problemas.push({
+        nivel: 'warning',
+        titulo: 'Corrección tibial moderada (' + Math.abs(delta_tibia).toFixed(1) + '°)',
+        sol: '<b>Verificar:</b> que no se exceda 8 mm en hueso sano. <b>Solución:</b> resecar progresivamente y validar con caliper antes del corte definitivo.'
+      });
+    }
+
+    // Corrección femoral grande
+    if (Math.abs(delta_femur) > 4){
+      problemas.push({
+        nivel: 'danger',
+        titulo: 'Corrección femoral >4° (' + Math.abs(delta_femur).toFixed(1) + '°)',
+        sol: '<b>Riesgo:</b> alteración del joint line, déficit de extensión, problema patelar. <b>Solución:</b> validar rotación con TEA + Whiteside. Considerar implante con offset posterior aumentado.'
+      });
+    }
+
+    // Valgo + MCL
+    if (ahka_tipo === 'Valgo' && mcl === 'insuficiente'){
+      problemas.push({
+        nivel: 'danger',
+        titulo: 'Valgo + MCL insuficiente',
+        sol: '<b>Riesgo:</b> inestabilidad medial residual catastrófica. <b>Solución:</b> implante CCK o RH disponible. No intentar rKA puro. Considerar vástagos.'
+      });
+    } else if (ahka_tipo === 'Valgo' && mcl === 'dudoso'){
+      problemas.push({
+        nivel: 'warning',
+        titulo: 'Valgo + MCL dudoso',
+        sol: '<b>Riesgo:</b> apertura medial bajo prueba. <b>Solución:</b> tener PS y CCK en pabellón. Decidir según gaps tras cortes de prueba.'
+      });
+    }
+
+    // Varo severo
+    if (ahka_tipo === 'Varo' && Math.abs(ahka) > 10){
+      problemas.push({
+        nivel: 'warning',
+        titulo: 'Varo severo (' + Math.abs(ahka).toFixed(1) + '°)',
+        sol: '<b>Riesgo:</b> dificultad para corregir sin sobre-liberar medial. <b>Solución:</b> release medial escalonado (osteofitos → MCL profundo → semimembranoso). Preservar MCL superficial.'
+      });
+    }
+
+    // Defecto óseo
+    if (def === 'severo'){
+      problemas.push({
+        nivel: 'danger',
+        titulo: 'Defecto óseo severo (>10 mm)',
+        sol: '<b>Riesgo:</b> fijación inestable, hundimiento. <b>Solución:</b> aumentos metálicos (medial tibial) + vástago de extensión. Cement-on-cement no recomendado. Considerar aloinjerto estructural si >15 mm.'
+      });
+    } else if (def === 'moderado'){
+      problemas.push({
+        nivel: 'warning',
+        titulo: 'Defecto óseo moderado (5-10 mm)',
+        sol: '<b>Solución:</b> cuña metálica medial o cemento + tornillo (si <10 mm). Considerar vástago si combinado con osteopenia.'
+      });
+    }
+
+    // Patela
+    if (pat === 'inestable'){
+      problemas.push({
+        nivel: 'warning',
+        titulo: 'Patela inestable preoperatoria',
+        sol: '<b>Solución:</b> lateral release + medialización del componente femoral. Evaluar RLPFM concomitante si TT-TG >20 mm. Cuidado con valgo residual.'
+      });
+    } else if (pat === 'dudoso'){
+      problemas.push({
+        nivel: 'info',
+        titulo: 'Tracking patelar dudoso',
+        sol: '<b>Solución:</b> validar tracking con prueba "no-thumb". Si maltracking → lateralizar componente femoral 1-2 mm o ajustar rotación femoral.'
+      });
+    }
+
+    // JLCA / colapso intraarticular
+    if (jlca > 6){
+      problemas.push({
+        nivel: 'danger',
+        titulo: 'JLCA alto (' + jlca.toFixed(1) + '°)',
+        sol: '<b>Riesgo:</b> colapso intraarticular/laxitud relevante. <b>Solución:</b> no interpretar aHKA como eje real; confirmar reductibilidad, gaps y necesidad de mayor constricción.'
+      });
+    } else if (jlca > 4){
+      problemas.push({
+        nivel: 'warning',
+        titulo: 'JLCA borderline/alto (' + jlca.toFixed(1) + '°)',
+        sol: '<b>Solución:</b> diferenciar deformidad constitucional de colapso intraarticular. Comparar stress views, desgaste en mm y balance intraoperatorio.'
+      });
+    }
+
+    if (colapsoDominante === 'mixto'){
+      problemas.push({
+        nivel: 'warning',
+        titulo: 'Colapso mixto/bicompartimental',
+        sol: '<b>Riesgo:</b> no existe un compartimento sano confiable como referencia. <b>Solución:</b> usar resecciones como guía inicial y priorizar balance/gaps reales.'
+      });
+    }
+
+    if (reductibilidad === 'rigida'){
+      problemas.push({
+        nivel: 'danger',
+        titulo: 'Deformidad rígida o no reductible',
+        sol: '<b>Riesgo:</b> la simulación angular subestima liberaciones, constricción o aumentos. <b>Solución:</b> planificar estrategia de partes blandas e implante alternativo.'
+      });
+    } else if (reductibilidad === 'parcial'){
+      problemas.push({
+        nivel: 'warning',
+        titulo: 'Reductibilidad parcial',
+        sol: '<b>Solución:</b> confirmar cuánto corresponde a desgaste intraarticular y cuánto a deformidad fija antes de aceptar una rKA pura.'
+      });
+    }
+
+    // Eje fuera de zona
+    if (Math.abs(ahka_plan) > 3){
+      problemas.push({
+        nivel: 'warning',
+        titulo: 'aHKA planificado fuera de ±3° (' + Math.abs(ahka_plan).toFixed(1) + '° ' + (ahka_plan < 0 ? 'varo' : 'valgo') + ')',
+        sol: '<b>Riesgo:</b> salida de zona segura según restricción elegida. <b>Solución:</b> revisar plan. Si rKA aceptado: documentar, validar con telemetría intraoperatoria y balance/gaps.'
+      });
+    }
+
+    // JLO fuera
+    if (jlo_plan < 177 || jlo_plan > 183){
+      problemas.push({
+        nivel: 'info',
+        titulo: 'JLO planificada fuera de neutro (' + jlo_plan.toFixed(1) + '°)',
+        sol: '<b>Consideración:</b> oblicuidad de línea articular ' + jlo_plan_tipo + '. Si es constitucional, aceptable en rKA. Si es secundaria a deformidad, considerar normalizar.'
+      });
+    }
+
+    // MPTA o LDFA extremo
+    if (mpta_plan < 85 || mpta_plan > 95){
+      problemas.push({
+        nivel: 'danger',
+        titulo: 'MPTA final fuera de zona segura (' + mpta_plan.toFixed(1) + '°)',
+        sol: '<b>Riesgo:</b> falla de fijación tibial, slope alterado. <b>Solución:</b> mantener MPTA entre 85-95° (idealmente 87-93°). Reconsiderar plan.'
+      });
+    }
+
+    if (ldfa_plan < 85 || ldfa_plan > 95){
+      problemas.push({
+        nivel: 'danger',
+        titulo: 'LDFA final fuera de zona segura (' + ldfa_plan.toFixed(1) + '°)',
+        sol: '<b>Riesgo:</b> notch femoral, alteración trochlear. <b>Solución:</b> mantener LDFA 85-95° (idealmente 87-93°).'
+      });
+    }
+
+    // Gaps probablemente difíciles
+    if (ahka_tipo === 'Varo' && mcl === 'competente' && Math.abs(delta_tibia) < 1 && Math.abs(delta_femur) < 1){
+      problemas.push({
+        nivel: 'info',
+        titulo: 'Plan rKA puro en varo: gap medial probablemente tenso',
+        sol: '<b>Esperar:</b> gap medial extensión 1-2 mm (tenso fisiológico). <b>Solución:</b> usar inserto medial congruente. No liberar MCL profundo salvo apertura imposible.'
+      });
+    }
+
+    if (ahka_tipo === 'Valgo' && Math.abs(delta_femur) < 2){
+      problemas.push({
+        nivel: 'info',
+        titulo: 'Plan conservador en valgo: gap lateral probablemente tenso',
+        sol: '<b>Esperar:</b> tensión lateral en extensión. <b>Solución:</b> pie-crusting lateral progresivo (LCL, popliteo, banda iliotibial) o ajustar fémur distal lateral.'
+      });
+    }
+
+    // Discordancia mHKA vs aHKA
+    if (Math.abs(hka_signed - ahka) > 3){
+      problemas.push({
+        nivel: 'warning',
+        titulo: 'Discordancia mHKA medido vs aHKA calculado >3°',
+        sol: '<b>Riesgo:</b> deformidad extraarticular o slope tibial alterado no contabilizado. <b>Solución:</b> revisar telemetría completa, descartar deformidad femoral diafisaria o tibial proximal. Considerar TAC.'
+      });
+    }
+
+    if (problemas.length === 0){
+      problemas.push({
+        nivel: 'info',
+        titulo: 'Plan equilibrado sin problemas mayores anticipados',
+        sol: 'Confirmar gaps intraoperatorios antes de cementar. Validar tracking patelar con la rodilla reducida y componentes de prueba.'
+      });
+    }
+
+    $('problemas_lista').innerHTML = problemas.map(p =>
+      '<li class="' + p.nivel + '"><span class="problem-title">' + p.titulo + '</span><span class="problem-solution">' + p.sol + '</span></li>'
+    ).join('');
+
+    // SCORE
+    let score = 0;
+    const factores = [];
+
+    const desv_hka = Math.abs(hka_signed);
+    if (desv_hka > 10){ score += 25; factores.push('Deformidad severa (mHKA ' + desv_hka.toFixed(1) + '°): +25'); }
+    else if (desv_hka > 6){ score += 15; factores.push('Deformidad moderada (mHKA ' + desv_hka.toFixed(1) + '°): +15'); }
+    else if (desv_hka > 3){ score += 8; factores.push('Deformidad leve (mHKA ' + desv_hka.toFixed(1) + '°): +8'); }
+
+    if (Math.abs(delta_tibia) > 5){ score += 15; factores.push('Corrección tibial >5° (' + Math.abs(delta_tibia).toFixed(1) + '°): +15'); }
+    else if (Math.abs(delta_tibia) > 3){ score += 8; factores.push('Corrección tibial >3° (' + Math.abs(delta_tibia).toFixed(1) + '°): +8'); }
+
+    if (Math.abs(delta_femur) > 5){ score += 15; factores.push('Corrección femoral >5° (' + Math.abs(delta_femur).toFixed(1) + '°): +15'); }
+    else if (Math.abs(delta_femur) > 3){ score += 8; factores.push('Corrección femoral >3° (' + Math.abs(delta_femur).toFixed(1) + '°): +8'); }
+
+    if (ahka_tipo === 'Valgo'){ score += 10; factores.push('Fenotipo valgo (mayor cautela): +10'); }
+    if (mcl === 'dudoso'){ score += 10; factores.push('MCL dudoso: +10'); }
+    else if (mcl === 'insuficiente'){ score += 25; factores.push('MCL insuficiente: +25'); }
+    if (lcl === 'dudoso'){ score += 8; factores.push('LCL/PLC dudoso: +8'); }
+    else if (lcl === 'insuficiente'){ score += 20; factores.push('LCL/PLC insuficiente: +20'); }
+    if (def === 'leve'){ score += 5; factores.push('Defecto óseo leve: +5'); }
+    else if (def === 'moderado'){ score += 12; factores.push('Defecto óseo moderado: +12'); }
+    else if (def === 'severo'){ score += 22; factores.push('Defecto óseo severo: +22'); }
+    if (pat === 'dudoso'){ score += 8; factores.push('Tracking patelar dudoso: +8'); }
+    else if (pat === 'inestable'){ score += 18; factores.push('Patela inestable: +18'); }
+
+    if (jlca > 6){ score += 15; factores.push('JLCA >6°: probable colapso/laxitud intraarticular significativa: +15'); }
+    else if (jlca > 4){ score += 8; factores.push('JLCA >4°: revisar colapso intraarticular/reductibilidad: +8'); }
+
+    const desgasteMax = Math.max(desgasteMed, desgasteLat);
+    if (desgasteMax > 8){ score += 15; factores.push('Desgaste articular >8 mm: +15'); }
+    else if (desgasteMax >= 5){ score += 8; factores.push('Desgaste articular 5–8 mm: +8'); }
+    if (colapsoDominante === 'mixto'){ score += 12; factores.push('Colapso bicompartimental o mixto: +12'); }
+    if (reductibilidad === 'parcial'){ score += 8; factores.push('Reductibilidad parcial: +8'); }
+    else if (reductibilidad === 'rigida'){ score += 18; factores.push('Deformidad rígida/no reductible: +18'); }
+
+    if (Math.abs(ahka_plan) > 3){ score += 10; factores.push('aHKA planificado fuera de ±3°: +10'); }
+
+    score = Math.min(100, Math.round(score));
+
+    let nivel, color_score;
+    if (score <= 30){ nivel = 'BAJA · plan factible'; color_score = 'var(--success-strong)'; }
+    else if (score <= 60){ nivel = 'MEDIA · revisar gaps'; color_score = 'var(--warning-strong)'; }
+    else { nivel = 'ALTA · considerar constricción'; color_score = 'var(--danger-strong)'; }
+
+    $('score_bar').style.width = score + '%';
+    $('score_bar').style.background = color_score;
+    $('score_label').textContent = score + '/100 · ' + nivel;
+    $('score_label').style.color = color_score;
+
+    if (factores.length === 0){
+      $('score_factores').innerHTML = '<span style="color: var(--success-strong);">Caso de baja complejidad. Sin factores agravantes detectados.</span>';
+    } else {
+      $('score_factores').innerHTML = '<strong>Factores acumulados:</strong><br>' + factores.join('<br>');
+    }
+
+    // EVALUADOR GLOBAL
+    const alertas = [];
+    let filosofia, bg, txt;
+
+    if (score <= 30 && ahka_tipo !== 'Valgo'){
+      filosofia = 'rKA clásico — plan dentro de zona segura';
+      bg = 'var(--success-bg)'; txt = 'var(--success-text)';
+    } else if (score <= 60){
+      filosofia = 'rKA con restricción / Functional Alignment — confirmar balance';
+      bg = 'var(--warning-bg)'; txt = 'var(--warning-text)';
+    } else {
+      filosofia = 'Mecánico restrictivo con constricción (CCK/RH) — alta exigencia';
+      bg = 'var(--danger-bg)'; txt = 'var(--danger-text)';
+    }
+
+    if (Math.abs(delta_tibia) > 4) alertas.push('Corrección tibial >4°: confirmar gaps antes de cortar');
+    if (Math.abs(delta_femur) > 4) alertas.push('Corrección femoral >4°: revisar slot femoral y rotación');
+    if (ahka_tipo === 'Valgo' && mcl !== 'competente') alertas.push('Valgo + MCL no competente: alerta mayor; preparar semiconstreñido y plan B');
+    if (jlca > 4) alertas.push('JLCA >4°: separar deformidad constitucional de colapso intraarticular');
+    if (reductibilidad === 'rigida') alertas.push('Deformidad rígida/no reductible: el plan no debe basarse solo en ángulos');
+    if (colapsoDominante === 'medial' && ahka_tipo === 'Valgo') alertas.push('Discordancia: fenotipo valgo con colapso medial declarado. Revisar medición y lateralidad.');
+    if (colapsoDominante === 'lateral' && ahka_tipo === 'Varo') alertas.push('Discordancia: fenotipo varo con colapso lateral declarado. Revisar medición y desgaste real.');
+    if (Math.abs(ahka_plan) > 3) alertas.push('aHKA planificado fuera de ±3°: validar con telemetría intraop');
+    if (Math.abs(hka_signed - ahka) > 3) alertas.push('Discordancia mHKA vs aHKA >3°: revisar JLCA, reductibilidad y deformidad extraarticular');
+
+    if (alertas.length === 0) alertas.push('Sin alertas críticas. Confirmar gaps antes de cementar.');
+
+    $('eval_box').style.background = bg;
+    $('eval_filosofia').textContent = filosofia;
+    $('eval_filosofia').style.color = txt;
+    $('eval_alertas').innerHTML = alertas.map(a => '<div>• ' + a + '</div>').join('');
+
+    window._caso = { esDerecha, mpta, ldfa, mhka, dir, cpak, ahka_tipo, jlo_tipo, score, nivel, filosofia, mpta_plan, ldfa_plan, delta_tibia, delta_femur, ahka, ahka_plan, jlo_plan, jlo_plan_tipo, mhka_estimado, mcl, lcl, def, pat, jlca, reductibilidad, compartimentoInput, colapsoDominante, desgasteMed, desgasteLat, alertas, modoTibia, modoFemur, corte_tib_med, corte_tib_lat, corte_fem_med, corte_fem_lat, post_med, post_lat, slope, rot_text, problemas, pasos };
+  }
+
+  function generarResumen(){
+    const c = window._caso;
+    const fecha = new Date().toLocaleString('es-CL');
+    const resumen = [
+      'PLAN OPERATORIO rKA + CPAK · ' + fecha,
+      '════════════════════════════════════════',
+      'LADO: Rodilla ' + (c.esDerecha ? 'DERECHA' : 'IZQUIERDA'),
+      'MEDICIONES: MPTA ' + c.mpta + '° | LDFA ' + c.ldfa + '° | mHKA ' + c.mhka + '° ' + c.dir + ' | JLCA ' + c.jlca + '°',
+      'FENOTIPO: ' + c.cpak + ' (' + c.ahka_tipo + ' + ' + c.jlo_tipo + ')',
+      'DESGASTE: compartimento dominante ' + c.colapsoDominante + ' | medial ' + c.desgasteMed + ' mm | lateral ' + c.desgasteLat + ' mm | reductibilidad ' + c.reductibilidad,
+      '',
+      'PLAN SIMULADO:',
+      '• Tibia: MPTA ' + c.mpta + '° → ' + c.mpta_plan.toFixed(1) + '° (Δ ' + (c.delta_tibia >= 0 ? '+' : '') + c.delta_tibia.toFixed(1) + '°)',
+      '• Fémur: LDFA ' + c.ldfa + '° → ' + c.ldfa_plan.toFixed(1) + '° (Δ ' + (c.delta_femur >= 0 ? '+' : '') + c.delta_femur.toFixed(1) + '°)',
+      '• aHKA planificado: ' + Math.abs(c.ahka_plan).toFixed(1) + '° ' + (c.ahka_plan < -0.1 ? 'varo' : (c.ahka_plan > 0.1 ? 'valgo' : 'neutro')),
+      '• mHKA estimado: ' + Math.abs(c.mhka_estimado).toFixed(1) + '° ' + (c.mhka_estimado < -0.1 ? 'varo' : (c.mhka_estimado > 0.1 ? 'valgo' : 'neutro')) + ' — estimación, no sustituye balance intraoperatorio',
+      '• JLO final: ' + c.jlo_plan.toFixed(1) + '° (' + c.jlo_plan_tipo + ')',
+      '',
+      'CORTES ESTIMADOS DE REFERENCIA:',
+      '• Tibia: Med ' + c.corte_tib_med + ' mm / Lat ' + c.corte_tib_lat + ' mm · Slope ' + c.slope + '°',
+      '• Fémur distal: Med ' + c.corte_fem_med + ' / Lat ' + c.corte_fem_lat.toFixed(0) + ' mm',
+      '• Fémur posterior: Med ' + c.post_med + ' / Lat ' + c.post_lat + ' mm',
+      '• Rotación femoral: ' + c.rot_text,
+      '',
+      'SCORE HEURÍSTICO DE COMPLEJIDAD: ' + c.score + '/100 — ' + c.nivel,
+      'FILOSOFÍA: ' + c.filosofia,
+      '',
+      'CONTEXTO: MCL ' + c.mcl + ' | LCL/PLC ' + c.lcl + ' | Defecto ' + c.def + ' | Patela ' + c.pat,
+      '',
+      'PROBLEMAS ANTICIPADOS:',
+      c.problemas.map(p => '• ' + p.titulo).join('\n'),
+      '',
+      'ALERTAS GLOBALES:',
+      c.alertas.map(a => '• ' + a).join('\n')
+    ].join('\n');
+    const el = $('plan_resumen');
+    el.textContent = resumen;
+    el.classList.add('visible');
+  }
+
+  function aplicarPreset(preset){
+    document.querySelectorAll('.preset').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-preset="' + preset + '"]').classList.add('active');
+    const mpta = parseFloat($('mpta').value) || 90;
+    const ldfa = parseFloat($('ldfa').value) || 90;
+    setModoTibia('incremental');
+    setModoFemur('incremental');
+    let t_delta = 0, f_delta = 0;
+    if (preset === 'preservar'){ t_delta = 0; f_delta = 0; }
+    else if (preset === 'rka'){
+      let mpta_target = mpta;
+      if (mpta < 87) mpta_target = 87;
+      else if (mpta > 93) mpta_target = 93;
+      let ldfa_target = ldfa;
+      if (ldfa < 87) ldfa_target = 87;
+      else if (ldfa > 93) ldfa_target = 93;
+      t_delta = mpta_target - mpta;
+      f_delta = ldfa_target - ldfa;
+    } else if (preset === 'neutro'){
+      t_delta = 90 - mpta;
+      f_delta = 90 - ldfa;
+    } else if (preset === 'conservador'){
+      if (mpta < 89.5) t_delta = 2;
+      else if (mpta > 90.5) t_delta = -2;
+      if (ldfa < 89.5) f_delta = 2;
+      else if (ldfa > 90.5) f_delta = -2;
+    }
+    $('tibia_slider').value = t_delta.toFixed(1);
+    $('femur_slider').value = f_delta.toFixed(1);
+    calcular();
+  }
+
+  ['lado','mpta','ldfa','mhka','dir_hka','mcl','lcl','defecto','patela','jlca','reductibilidad','compartimento','desgaste_med','desgaste_lat'].forEach(id => {
+    $(id).addEventListener('input', () => {
+      document.querySelectorAll('.preset').forEach(b => b.classList.remove('active'));
+      if (id === 'mpta' && modoTibia === 'absoluto') $('tibia_slider').value = $('mpta').value;
+      if (id === 'ldfa' && modoFemur === 'absoluto') $('femur_slider').value = $('ldfa').value;
+      calcular();
+    });
+    $(id).addEventListener('change', calcular);
+  });
+
+  $('tibia_slider').addEventListener('input', () => {
+    document.querySelectorAll('.preset').forEach(b => b.classList.remove('active'));
+    calcular();
+  });
+  $('femur_slider').addEventListener('input', () => {
+    document.querySelectorAll('.preset').forEach(b => b.classList.remove('active'));
+    calcular();
+  });
+
+  $('modo_tibia_inc').addEventListener('click', () => setModoTibia('incremental'));
+  $('modo_tibia_abs').addEventListener('click', () => setModoTibia('absoluto'));
+  $('modo_femur_inc').addEventListener('click', () => setModoFemur('incremental'));
+  $('modo_femur_abs').addEventListener('click', () => setModoFemur('absoluto'));
+
+  // Toggles vista coronal
+  window._implant_view = 'after';
+  function setImplantView(view){
+    window._implant_view = view;
+    $('view_before').classList.toggle('active', view === 'before');
+    $('view_after').classList.toggle('active', view === 'after');
+    $('view_compare').classList.toggle('active', view === 'compare');
+    calcular();
+  }
+  $('view_before').addEventListener('click', () => setImplantView('before'));
+  $('view_after').addEventListener('click', () => setImplantView('after'));
+  $('view_compare').addEventListener('click', () => setImplantView('compare'));
+
+  document.querySelectorAll('.preset').forEach(b => {
+    b.addEventListener('click', () => aplicarPreset(b.dataset.preset));
+  });
+
+  $('btn_resumen').addEventListener('click', generarResumen);
+  $('btn_imprimir').addEventListener('click', () => {
+    generarResumen();
+    setTimeout(() => window.print(), 100);
+  });
+  $('btn_reset').addEventListener('click', () => {
+    $('lado').value = 'derecha';
+    $('mpta').value = 90; $('ldfa').value = 90; $('mhka').value = 0;
+    $('dir_hka').value = 'neutro';
+    $('mcl').value = 'competente'; $('lcl').value = 'competente';
+    $('defecto').value = 'no'; $('patela').value = 'estable';
+    $('jlca').value = 0; $('reductibilidad').value = 'no_aplica'; $('compartimento').value = 'auto';
+    $('desgaste_med').value = 0; $('desgaste_lat').value = 0;
+    setModoTibia('incremental'); setModoFemur('incremental');
+    $('tibia_slider').value = 0; $('femur_slider').value = 0;
+    document.querySelectorAll('.preset').forEach(b => b.classList.remove('active'));
+    $('plan_resumen').classList.remove('visible');
+    calcular();
+  });
+
+  calcular();
+})();
+</script>
+</body>
+</html>

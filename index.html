@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>Simulador rKA + CPAK v10 móvil</title>
+<style>
+:root{--bg:#f6f4ef;--card:#ffffff;--ink:#171717;--muted:#666;--line:#d9d4c8;--blue:#114b83;--blue2:#e8f2fb;--green:#0a5a45;--green2:#e5f5ee;--orange:#9a5b00;--orange2:#fff3df;--red:#8a1d1d;--red2:#fde9e9;--purple:#3d348b;--purple2:#efedff;--radius:14px;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;font-size:16px;line-height:1.35}body{padding:14px 12px 94px}.wrap{max-width:760px;margin:0 auto}.top{background:linear-gradient(135deg,#fff,#eef6ff);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}.kicker{font-size:12px;color:var(--blue);font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}h1{font-size:22px;line-height:1.12;margin:0 0 8px;font-weight:800}.sub{font-size:13px;color:var(--muted);margin:0}.status{margin-top:10px;font-size:12px;border-radius:10px;padding:8px 10px;background:var(--green2);color:var(--green);font-weight:700}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}.title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}.title h2{font-size:15px;margin:0;font-weight:800}.title span{font-size:12px;color:var(--muted)}.grid{display:grid;grid-template-columns:1fr;gap:10px}@media(min-width:600px){.grid.two{grid-template-columns:1fr 1fr}.grid.three{grid-template-columns:repeat(3,1fr)}}label{font-size:12px;font-weight:700;color:#57534e;margin:0 0 4px;display:block}.field{width:100%;min-height:46px;border:1px solid #c8c2b6;border-radius:12px;background:#fff;color:#111;padding:8px 10px;font-size:16px;font-family:inherit}select.field{appearance:auto}.hint{font-size:11px;color:var(--muted);margin-top:4px}.outgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{border-radius:12px;padding:10px;background:#f3f1eb;border:1px solid #e2ded3}.metric.big{background:var(--blue2);border-color:#b8d7f2}.m-label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.03em}.m-value{font-size:22px;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums}.m-sub{font-size:12px;color:var(--muted);margin-top:2px}.adjust{background:var(--purple2);border-color:#c8c3ff}.stepper{display:grid;grid-template-columns:48px 1fr 48px;gap:8px;align-items:center}.btn{min-height:46px;border:1px solid #bbb3a6;background:#fff;border-radius:12px;font-size:16px;font-weight:800;color:#111;font-family:inherit}.btn:active{transform:scale(.98)}.btn.primary{background:#103f70;color:#fff;border-color:#103f70}.btn.ghost{background:#f7f5ef}.btn.warn{background:var(--orange2);border-color:#e2b061;color:#704000}.valuebox{text-align:center;background:#fff;border:1px solid #c8c2b6;border-radius:12px;min-height:46px;display:flex;flex-direction:column;justify-content:center}.valuebox b{font-size:22px;font-variant-numeric:tabular-nums}.valuebox small{font-size:11px;color:var(--muted)}.presetrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.alert{border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:13px}.alert.info{background:var(--blue2);color:var(--blue);border:1px solid #b8d7f2}.alert.warn{background:var(--orange2);color:var(--orange);border:1px solid #e2b061}.alert.danger{background:var(--red2);color:var(--red);border:1px solid #e8b7b7}.list{margin:0;padding-left:18px}.list li{margin:6px 0}.scorebar{height:14px;background:#eee9dc;border-radius:999px;overflow:hidden;margin:8px 0}.scorefill{height:100%;width:0;background:#3b7ddd;border-radius:999px}.summary{white-space:pre-wrap;background:#121212;color:#f5f5f5;border-radius:12px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5;display:none}.summary.show{display:block}.bottom{position:fixed;left:0;right:0;bottom:0;background:rgba(246,244,239,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));z-index:10}.bottom .bar{max-width:760px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.bottom .btn{font-size:13px;min-height:44px}.smallnote{font-size:11px;color:var(--muted);text-align:center;margin-top:18px}.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="kicker">v10 · versión móvil robusta</div>
+    <h1>Simulador rKA + CPAK</h1>
+    <p class="sub">Cálculo docente de fenotipo, planificación rKA restrictiva, complejidad y alertas. Sin SVG complejo, sin dependencias, diseñado para Safari/iPhone.</p>
+    <div id="estado" class="status">Cargando simulador…</div>
+  </div>
+
+  <div class="card">
+    <div class="title"><h2>1. Datos del paciente</h2><span>telemetría + clínica</span></div>
+    <div class="grid two">
+      <div><label>Lado</label><select id="lado" class="field"><option value="derecha">Rodilla derecha</option><option value="izquierda">Rodilla izquierda</option></select></div>
+      <div><label>Dirección mHKA</label><select id="dir" class="field"><option value="varo">Varo</option><option value="valgo">Valgo</option><option value="neutro">Neutro</option></select></div>
+      <div><label>mHKA medido (°)</label><input id="mhka" class="field" type="number" inputmode="decimal" value="6" step="0.5"></div>
+      <div><label>JLCA (°)</label><input id="jlca" class="field" type="number" inputmode="decimal" value="3" step="0.5"></div>
+      <div><label>MPTA (°)</label><input id="mpta" class="field" type="number" inputmode="decimal" value="84" step="0.5"></div>
+      <div><label>LDFA (°)</label><input id="ldfa" class="field" type="number" inputmode="decimal" value="87" step="0.5"></div>
+      <div><label>Reductibilidad</label><select id="red" class="field"><option value="reductible">Reductible</option><option value="parcial">Parcial</option><option value="rigida">Rígida</option></select></div>
+      <div><label>Compartimento colapsado</label><select id="comp" class="field"><option value="auto">Automático</option><option value="medial">Medial</option><option value="lateral">Lateral</option><option value="mixto">Mixto</option><option value="ninguno">Ninguno claro</option></select></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title"><h2>2. Desgaste y partes blandas</h2><span>para alertas</span></div>
+    <div class="grid two">
+      <div><label>Desgaste medial (mm)</label><input id="wearM" class="field" type="number" inputmode="decimal" value="4" step="0.5"></div>
+      <div><label>Desgaste lateral (mm)</label><input id="wearL" class="field" type="number" inputmode="decimal" value="0" step="0.5"></div>
+      <div><label>MCL</label><select id="mcl" class="field"><option value="competente">Competente</option><option value="dudoso">Dudoso</option><option value="insuficiente">Insuficiente</option></select></div>
+      <div><label>LCL/PLC</label><select id="lcl" class="field"><option value="competente">Competente</option><option value="dudoso">Dudoso</option><option value="insuficiente">Insuficiente</option></select></div>
+      <div><label>Defecto óseo</label><select id="defecto" class="field"><option value="no">No</option><option value="leve">Leve &lt;5 mm</option><option value="moderado">Moderado 5–10 mm</option><option value="severo">Severo &gt;10 mm</option></select></div>
+      <div><label>Patela/tracking</label><select id="patela" class="field"><option value="estable">Estable</option><option value="dudoso">Dudoso</option><option value="inestable">Inestable</option></select></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title"><h2>3. Fenotipo CPAK medido</h2><span>salida objetiva</span></div>
+    <div class="outgrid">
+      <div class="metric big"><div class="m-label">aHKA</div><div id="ahka" class="m-value">—</div><div id="ahkaSub" class="m-sub">—</div></div>
+      <div class="metric big"><div class="m-label">JLO</div><div id="jlo" class="m-value">—</div><div id="jloSub" class="m-sub">—</div></div>
+      <div class="metric"><div class="m-label">CPAK</div><div id="cpak" class="m-value">—</div><div id="cpakSub" class="m-sub">—</div></div>
+      <div class="metric"><div class="m-label">Colapso</div><div id="colapso" class="m-value">—</div><div id="colapsoSub" class="m-sub">—</div></div>
+    </div>
+  </div>
+
+  <div class="card adjust">
+    <div class="title"><h2>4. Simulación manual</h2><span>botones táctiles</span></div>
+    <label>Corrección tibial · Δ MPTA</label>
+    <div class="stepper"><button class="btn" id="tibMinus">−</button><div class="valuebox"><b id="dTibia">0.0°</b><small id="tibiaFinal">MPTA final —</small></div><button class="btn" id="tibPlus">+</button></div>
+    <div class="hint">Tibia: subir MPTA = más valgo; bajar MPTA = más varo.</div>
+    <br>
+    <label>Corrección femoral · Δ LDFA</label>
+    <div class="stepper"><button class="btn" id="femMinus">−</button><div class="valuebox"><b id="dFemur">0.0°</b><small id="femurFinal">LDFA final —</small></div><button class="btn" id="femPlus">+</button></div>
+    <div class="hint">Fémur: subir LDFA = más varo femoral; bajar LDFA = más valgo femoral.</div>
+    <div class="presetrow"><button class="btn ghost" id="presetPreservar">Preservar</button><button class="btn ghost" id="presetRKA">rKA 87–93</button><button class="btn ghost" id="presetNeutro">90/90</button><button class="btn ghost" id="presetConservador">±2° máx</button></div>
+  </div>
+
+  <div class="card">
+    <div class="title"><h2>5. Resultado simulado</h2><span>no reemplaza balance intraop</span></div>
+    <div class="outgrid">
+      <div class="metric big"><div class="m-label">aHKA planificado</div><div id="ahkaPlan" class="m-value">—</div><div id="ahkaPlanSub" class="m-sub">—</div></div>
+      <div class="metric big"><div class="m-label">mHKA estimado</div><div id="mhkaEst" class="m-value">—</div><div class="m-sub">Estimación docente</div></div>
+      <div class="metric"><div class="m-label">JLO final</div><div id="jloPlan" class="m-value">—</div><div id="jloPlanSub" class="m-sub">—</div></div>
+      <div class="metric"><div class="m-label">Complejidad</div><div id="scoreTxt" class="m-value">—</div><div id="scoreSub" class="m-sub">Score heurístico</div></div>
+    </div>
+    <div class="scorebar"><div id="scoreFill" class="scorefill"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="title"><h2>6. Cortes estimados de referencia</h2><span>docente</span></div>
+    <div class="outgrid">
+      <div class="metric"><div class="m-label">Tibia medial</div><div id="cutTM" class="m-value">—</div><div class="m-sub">mm</div></div>
+      <div class="metric"><div class="m-label">Tibia lateral</div><div id="cutTL" class="m-value">—</div><div class="m-sub">mm</div></div>
+      <div class="metric"><div class="m-label">Fémur distal medial</div><div id="cutFM" class="m-value">—</div><div class="m-sub">mm</div></div>
+      <div class="metric"><div class="m-label">Fémur distal lateral</div><div id="cutFL" class="m-value">—</div><div class="m-sub">mm</div></div>
+    </div>
+    <div class="alert info" style="margin-top:10px">Referencia docente: lado sano ≈ 8 mm, lado colapsado ≈ 2 mm. Validar con caliper, navegación/robot, desgaste real y balance intraoperatorio.</div>
+  </div>
+
+  <div class="card">
+    <div class="title"><h2>7. Alertas clínicas</h2><span>riesgos del plan</span></div>
+    <div id="alerts"></div>
+  </div>
+
+  <div class="card">
+    <div class="title"><h2>8. Resumen</h2><span>copiar / enviar</span></div>
+    <pre id="summary" class="summary"></pre>
+    <div id="summaryHint" class="alert info">Toca “Resumen” abajo para generar el texto.</div>
+  </div>
+
+  <div class="smallnote">Uso docente y de planificación. No validado como score clínico. La decisión final depende del cirujano, imágenes completas, examen físico y balance intraoperatorio.</div>
+</div>
+
+<div class="bottom"><div class="bar">
+  <button class="btn primary" id="btnResumen">Resumen</button>
+  <button class="btn warn" id="btnCopy">Copiar</button>
+  <button class="btn ghost" id="btnReset">Reset</button>
+</div></div>
+
+<script>
+(function(){
+  var dT = 0, dF = 0;
+  function el(id){ return document.getElementById(id); }
+  function num(id, def){ var v = parseFloat(String(el(id).value).replace(',', '.')); return isNaN(v) ? def : v; }
+  function fmt(v){ return (v>=0?'+':'') + v.toFixed(1); }
+  function absdir(v, neg, pos){ if(Math.abs(v)<0.05) return 'neutro'; return Math.abs(v).toFixed(1)+'° '+(v<0?neg:pos); }
+  function clamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
+  function ahkaType(x){ if(x < -2) return 'Varo'; if(x > 2) return 'Valgo'; return 'Neutro'; }
+  function jloType(x){ if(x < 177) return 'Apex distal'; if(x > 183) return 'Apex proximal'; return 'Neutra'; }
+  function cpakName(a,j){ var key=a+'|'+j; var m={
+    'Varo|Apex distal':'I','Neutro|Apex distal':'II','Valgo|Apex distal':'III',
+    'Varo|Neutra':'IV','Neutro|Neutra':'V','Valgo|Neutra':'VI',
+    'Varo|Apex proximal':'VII','Neutro|Apex proximal':'VIII','Valgo|Apex proximal':'IX'
+  }; return 'CPAK '+(m[key]||'—'); }
+  function getComp(ahka, wm, wl){ var c=el('comp').value; if(c!=='auto') return c; if(wm>=2 && wm>wl+1) return 'medial'; if(wl>=2 && wl>wm+1) return 'lateral'; if(wm>=2 && wl>=2) return 'mixto'; if(ahka<-2) return 'medial probable'; if(ahka>2) return 'lateral probable'; return 'ninguno claro'; }
+  function scoreLevel(s){ if(s<=30) return 'Baja'; if(s<=60) return 'Media'; return 'Alta'; }
+  function setAlert(kind, html){ return '<div class="alert '+kind+'">'+html+'</div>'; }
+  function calc(){
+    var mpta=num('mpta',90), ldfa=num('ldfa',90), mhka=num('mhka',0), jlca=num('jlca',0), wm=num('wearM',0), wl=num('wearL',0);
+    var dir=el('dir').value, red=el('red').value, mcl=el('mcl').value, lcl=el('lcl').value, def=el('defecto').value, pat=el('patela').value;
+    var ahka=mpta-ldfa, jlo=mpta+ldfa, at=ahkaType(ahka), jt=jloType(jlo), cpak=cpakName(at,jt);
+    var comp=getComp(ahka,wm,wl);
+    var mptaP=mpta+dT, ldfaP=ldfa+dF, ahkaP=mptaP-ldfaP, jloP=mptaP+ldfaP, atP=ahkaType(ahkaP), jtP=jloType(jloP);
+    var mhkaSigned = dir==='varo' ? -Math.abs(mhka) : (dir==='valgo' ? Math.abs(mhka) : 0);
+    var mhkaEst = mhkaSigned + dT - dF; // simplificación docente: tibia valgo suma; fémur varo resta eje global
+
+    el('ahka').innerHTML = absdir(ahka,'varo','valgo'); el('ahkaSub').innerHTML=at;
+    el('jlo').innerHTML = jlo.toFixed(1)+'°'; el('jloSub').innerHTML=jt;
+    el('cpak').innerHTML = cpak; el('cpakSub').innerHTML=at+' + '+jt;
+    el('colapso').innerHTML = comp; el('colapsoSub').innerHTML='M '+wm.toFixed(1)+' mm · L '+wl.toFixed(1)+' mm';
+    el('dTibia').innerHTML = fmt(dT)+'°'; el('tibiaFinal').innerHTML='MPTA final '+mptaP.toFixed(1)+'°';
+    el('dFemur').innerHTML = fmt(dF)+'°'; el('femurFinal').innerHTML='LDFA final '+ldfaP.toFixed(1)+'°';
+    el('ahkaPlan').innerHTML = absdir(ahkaP,'varo','valgo'); el('ahkaPlanSub').innerHTML=atP;
+    el('mhkaEst').innerHTML = absdir(mhkaEst,'varo','valgo');
+    el('jloPlan').innerHTML = jloP.toFixed(1)+'°'; el('jloPlanSub').innerHTML = jtP;
+
+    var score=0, factors=[];
+    function add(points, txt){ score+=points; factors.push(txt); }
+    if(Math.abs(mhka)>=10) add(18,'mHKA severo'); else if(Math.abs(mhka)>=6) add(10,'mHKA moderado');
+    if(Math.abs(dT)+Math.abs(dF)>5) add(15,'corrección angular acumulada >5°'); else if(Math.abs(dT)+Math.abs(dF)>3) add(8,'corrección angular acumulada 3–5°');
+    if(Math.abs(ahkaP)>4) add(10,'aHKA planificado fuera de zona confortable');
+    if(jloP<177 || jloP>183) add(8,'JLO fuera de zona neutra');
+    if(jlca>=5) add(12,'JLCA alto'); else if(jlca>=3) add(6,'JLCA borderline');
+    if(red==='rigida') add(15,'deformidad rígida'); else if(red==='parcial') add(8,'reductibilidad parcial');
+    if(mcl==='insuficiente'||lcl==='insuficiente') add(18,'colateral insuficiente'); else if(mcl==='dudoso'||lcl==='dudoso') add(8,'colateral dudoso');
+    if(def==='severo') add(18,'defecto óseo severo'); else if(def==='moderado') add(10,'defecto óseo moderado'); else if(def==='leve') add(4,'defecto óseo leve');
+    if(pat==='inestable') add(10,'patela/tracking inestable'); else if(pat==='dudoso') add(5,'tracking dudoso');
+    score=clamp(score,0,100);
+    el('scoreTxt').innerHTML=score+'/100'; el('scoreSub').innerHTML=scoreLevel(score)+' · '+(factors.length?factors.slice(0,2).join(', '):'sin factores mayores');
+    el('scoreFill').style.width=score+'%'; el('scoreFill').style.background=score<=30?'#2f8f46':(score<=60?'#d88a13':'#b83232');
+
+    // cortes docentes simples
+    var ctM=8, ctL=8, cfM=8, cfL=8;
+    if(comp.indexOf('medial')>=0){ ctM=2; ctL=8; }
+    if(comp.indexOf('lateral')>=0){ ctM=8; ctL=2; }
+    if(comp==='mixto'){ ctM=4; ctL=4; }
+    if(dT>0) ctL+=Math.round(Math.abs(dT));
+    if(dT<0) ctM+=Math.round(Math.abs(dT));
+    if(dF>0) cfL+=Math.round(Math.abs(dF));
+    if(dF<0) cfM+=Math.round(Math.abs(dF));
+    el('cutTM').innerHTML=ctM.toFixed(0); el('cutTL').innerHTML=ctL.toFixed(0); el('cutFM').innerHTML=cfM.toFixed(0); el('cutFL').innerHTML=cfL.toFixed(0);
+
+    var alerts=[];
+    alerts.push(setAlert('info','<b>Uso correcto:</b> simulador docente. No es recomendador quirúrgico validado.'));
+    if(jlca>=5) alerts.push(setAlert('danger','<b>JLCA alto:</b> sugiere colapso/laxitud intraarticular. No interpretar solo como deformidad ósea.'));
+    else if(jlca>=3) alerts.push(setAlert('warn','<b>JLCA borderline:</b> revisar stress views y reductibilidad antes de cerrar filosofía.'));
+    if(red==='rigida') alerts.push(setAlert('danger','<b>Deformidad rígida:</b> alto riesgo de plan insuficiente si se asume reductibilidad.'));
+    if(comp==='mixto') alerts.push(setAlert('warn','<b>Colapso mixto:</b> preservar fenotipo puede ser menos predecible; evaluar indicación, constraint y balance.'));
+    if(at==='Valgo' && (mcl==='dudoso'||mcl==='insuficiente')) alerts.push(setAlert('danger','<b>Valgo + MCL no competente:</b> alerta mayor. Evitar plan agresivo sin estrategia de estabilidad.'));
+    if(at==='Varo' && (lcl==='dudoso'||lcl==='insuficiente')) alerts.push(setAlert('danger','<b>Varo + LCL/PLC no competente:</b> alerta mayor de inestabilidad lateral.'));
+    if((comp.indexOf('medial')>=0 && at==='Valgo') || (comp.indexOf('lateral')>=0 && at==='Varo')) alerts.push(setAlert('warn','<b>Discordancia fenotipo/colapso:</b> no mezclar CPAK constitucional con desgaste intraarticular real.'));
+    if(mptaP<87 || mptaP>93) alerts.push(setAlert('warn','<b>MPTA final fuera de 87–93°:</b> revisar si el plan sale de rKA restrictiva.'));
+    if(ldfaP<87 || ldfaP>93) alerts.push(setAlert('warn','<b>LDFA final fuera de 87–93°:</b> revisar seguridad de la filosofía.'));
+    if(score>60) alerts.push(setAlert('danger','<b>Complejidad alta:</b> considerar planificación avanzada, backup de implantes y discusión preoperatoria.'));
+    el('alerts').innerHTML=alerts.join('');
+    return {mpta:mpta,ldfa:ldfa,mhka:mhka,dir:dir,jlca:jlca,wm:wm,wl:wl,red:red,comp:comp,ahka:ahka,jlo:jlo,cpak:cpak,mptaP:mptaP,ldfaP:ldfaP,ahkaP:ahkaP,jloP:jloP,mhkaEst:mhkaEst,score:score,scoreLevel:scoreLevel(score),ctM:ctM,ctL:ctL,cfM:cfM,cfL:cfL};
+  }
+  function summary(){ var x=calc(); var txt='SIMULADOR rKA + CPAK v10\n';
+    txt+='\n1) Fenotipo medido\n'; txt+='MPTA '+x.mpta.toFixed(1)+'° · LDFA '+x.ldfa.toFixed(1)+'° · aHKA '+x.ahka.toFixed(1)+'° · JLO '+x.jlo.toFixed(1)+'° · '+x.cpak+'\n';
+    txt+='mHKA '+x.dir+' '+x.mhka.toFixed(1)+'° · JLCA '+x.jlca.toFixed(1)+'° · reductibilidad '+x.red+'\n';
+    txt+='\n2) Desgaste / colapso\n'; txt+='Compartimento: '+x.comp+' · desgaste medial '+x.wm.toFixed(1)+' mm · lateral '+x.wl.toFixed(1)+' mm\n';
+    txt+='\n3) Plan simulado\n'; txt+='MPTA final '+x.mptaP.toFixed(1)+'° · LDFA final '+x.ldfaP.toFixed(1)+'° · aHKA planificado '+x.ahkaP.toFixed(1)+'° · JLO final '+x.jloP.toFixed(1)+'°\n';
+    txt+='mHKA estimado '+x.mhkaEst.toFixed(1)+'° (estimación docente, no reemplaza balance intraoperatorio)\n';
+    txt+='\n4) Cortes estimados de referencia\n'; txt+='Tibia M/L: '+x.ctM+'/'+x.ctL+' mm · Fémur distal M/L: '+x.cfM+'/'+x.cfL+' mm\n';
+    txt+='\n5) Complejidad\n'; txt+='Score heurístico '+x.score+'/100 · '+x.scoreLevel+'\n';
+    txt+='\nNota: uso docente/no validado. Validar con radiografías completas, stress views, caliper, navegación/robot y balance intraoperatorio.';
+    el('summary').textContent=txt; el('summary').className='summary show'; el('summaryHint').className='hidden'; return txt; }
+  function bind(){
+    var ids=['lado','dir','mhka','jlca','mpta','ldfa','red','comp','wearM','wearL','mcl','lcl','defecto','patela'];
+    for(var i=0;i<ids.length;i++){ el(ids[i]).addEventListener('input', calc); el(ids[i]).addEventListener('change', calc); }
+    el('tibMinus').onclick=function(){ dT=clamp(dT-0.5,-8,8); calc();}; el('tibPlus').onclick=function(){ dT=clamp(dT+0.5,-8,8); calc();};
+    el('femMinus').onclick=function(){ dF=clamp(dF-0.5,-8,8); calc();}; el('femPlus').onclick=function(){ dF=clamp(dF+0.5,-8,8); calc();};
+    el('presetPreservar').onclick=function(){ dT=0; dF=0; calc();};
+    el('presetNeutro').onclick=function(){ dT=90-num('mpta',90); dF=90-num('ldfa',90); calc();};
+    el('presetRKA').onclick=function(){ var m=num('mpta',90), f=num('ldfa',90); dT=clamp(m<87?87-m:(m>93?93-m:0),-8,8); dF=clamp(f<87?87-f:(f>93?93-f:0),-8,8); calc();};
+    el('presetConservador').onclick=function(){ var m=num('mpta',90), f=num('ldfa',90); dT=clamp(90-m,-2,2); dF=clamp(90-f,-2,2); calc();};
+    el('btnResumen').onclick=summary;
+    el('btnCopy').onclick=function(){ var t=summary(); if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(function(){ el('estado').textContent='Resumen copiado al portapapeles'; }); } else { el('estado').textContent='Resumen generado. Selecciona el texto y copia manualmente.'; }};
+    el('btnReset').onclick=function(){ dT=0; dF=0; el('mpta').value=84; el('ldfa').value=87; el('mhka').value=6; el('dir').value='varo'; el('jlca').value=3; el('wearM').value=4; el('wearL').value=0; el('red').value='reductible'; el('comp').value='auto'; el('mcl').value='competente'; el('lcl').value='competente'; el('defecto').value='no'; el('patela').value='estable'; el('summary').className='summary'; el('summaryHint').className='alert info'; calc();};
+    el('estado').textContent='Simulador activo · compatible móvil'; calc();
+  }
+  try{ bind(); }catch(e){ el('estado').textContent='Error de carga: '+e.message; el('estado').style.background='#fde9e9'; el('estado').style.color='#8a1d1d'; }
+})();
+</script>
+</body></html>
