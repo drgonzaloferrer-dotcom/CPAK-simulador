@@ -1,5 +1,15 @@
-# Simulador rKA + CPAK v9.5
+# Simulador rKA + CPAK v9.6
 
-Versión con recomendación visible, JLO/JLA separados, gráfico dinámico original preservado y botón de target seguro 87–93.
+Versión con separación explícita entre:
 
-Subir todo a GitHub Pages. El archivo principal es index.html.
+1. Datos medidos del paciente.
+2. Recomendación automática inicial.
+3. Simulación actual del gráfico.
+
+## Uso en GitHub Pages
+
+Subir `index.html` a la raíz del repositorio y activar Pages desde `Settings > Pages > Deploy from branch > main / root`.
+
+## Nota clínica
+
+Herramienta docente/no validada. La recomendación automática no reemplaza evaluación clínica, telemetría, stress views, balance intraoperatorio ni juicio quirúrgico.
