@@ -1,15 +1,7 @@
-# Simulador rKA + CPAK v9.6
+# Simulador rKA + CPAK v9.7
 
-Versión con separación explícita entre:
+Versión con límite de corrección ósea automática.
 
-1. Datos medidos del paciente.
-2. Recomendación automática inicial.
-3. Simulación actual del gráfico.
+Cambio principal: el algoritmo no fuerza MPTA/LDFA a 87–93 si eso requiere más de 4° de corrección por hueso. Si se requieren más de 5°, marca el caso como no resoluble por rKA simple/corte intraarticular y recomienda planificación compleja.
 
-## Uso en GitHub Pages
-
-Subir `index.html` a la raíz del repositorio y activar Pages desde `Settings > Pages > Deploy from branch > main / root`.
-
-## Nota clínica
-
-Herramienta docente/no validada. La recomendación automática no reemplaza evaluación clínica, telemetría, stress views, balance intraoperatorio ni juicio quirúrgico.
+Subir `index.html` a la raíz del repositorio y activar GitHub Pages.

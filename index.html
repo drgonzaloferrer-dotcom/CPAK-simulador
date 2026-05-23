@@ -923,7 +923,7 @@
     <div class="version">v9.6 · Dr. Gonzalo Ferrer · Unidad de Rodilla CUA</div>
   </div>
 
-  <!-- v9.6 TABLERO DE DECISIÓN ARRIBA: datos medidos ≠ recomendación ≠ simulación actual -->
+  <!-- v9.7 TABLERO DE DECISIÓN ARRIBA: datos medidos ≠ recomendación ≠ simulación actual -->
   <div class="card decision-panel caution" id="decision_panel">
     <div class="decision-kicker">Lectura automática · separa datos medidos, recomendación y simulación actual</div>
     <div class="decision-title-row">
@@ -964,7 +964,7 @@
       </div>
     </div>
     <div class="decision-actions">
-      <button id="btn_aplicar_seguro" type="button">Aplicar recomendación al simulador</button>
+      <button id="btn_aplicar_seguro" type="button">Aplicar recomendación limitada al simulador</button>
       <button id="btn_ir_grafico" type="button">Ver gráfico dinámico</button>
       <button id="btn_ir_reco" type="button">Ver recomendación detallada</button>
     </div>
@@ -1078,7 +1078,7 @@
     <div class="preset-row">
       <span style="font-size: 11px; color: var(--purple-text); margin-right: 4px;">Presets:</span>
       <button class="preset" data-preset="preservar" type="button">Preservar (0°/0°)</button>
-      <button class="preset" data-preset="rka" type="button">rKA restrictivo 87-93</button>
+      <button class="preset" data-preset="rka" type="button">rKA restrictivo seguro</button>
       <button class="preset" data-preset="neutro" type="button">Neutro mecánico 90/90</button>
       <button class="preset" data-preset="conservador" type="button">Conservador 2°/2°</button>
     </div>
@@ -2746,26 +2746,60 @@
     // Se calcula un TARGET recomendado desde los datos medidos y se compara contra la simulación actual.
     function round05(v){ return Math.round(v * 2) / 2; }
     function targetInicial(mpta0, ldfa0){
-      let mt = clampSeguro(mpta0);
-      let lf = clampSeguro(ldfa0);
+      // v9.7: no forzar un fenotipo extremo a 87–93 si exige resección ósea excesiva.
+      // Regla docente: la recomendación automática NO puede pedir >4° de corrección por tibia o fémur.
+      // Si para entrar a zona 87–93 se requieren >5°, el caso queda marcado como "no resoluble por rKA simple/corte intraarticular".
+      const MAX_AUTO_CORR = 4;   // grados máximos que la app puede sugerir automáticamente
+      const UMBRAL_NO_SIMPLE = 5; // sobre este valor no se debe convertir en target automático
 
-      // Si hay riesgo intraarticular/ligamentario alto, no preservar fenotipos extremos: acercar al centro de zona segura.
       const riesgoAltoParaPreservar = score > 60 || reductibilidad === 'rigida' || colapsoDominante === 'mixto' || altaCautelaLig || jlca > 6 || def === 'severo';
       const riesgoIntermedio = zonaGrisIntra || def === 'moderado' || Math.max(desgasteMed, desgasteLat) >= 6;
 
-      if (riesgoAltoParaPreservar){
-        mt = 90;
-        lf = 90;
-      } else if (riesgoIntermedio){
-        // Mantiene personalización, pero evita extremos de 87/93.
-        mt = Math.max(88, Math.min(92, mt));
-        lf = Math.max(88, Math.min(92, lf));
+      function targetPorHueso(valor, centroForzado){
+        let objetivo;
+        if (centroForzado) objetivo = 90;
+        else if (riesgoIntermedio) objetivo = Math.max(88, Math.min(92, Math.max(87, Math.min(93, valor))));
+        else objetivo = Math.max(87, Math.min(93, valor));
+
+        let delta = objetivo - valor;
+        const requeridoParaSafe = Math.abs(delta);
+        const noSimple = requeridoParaSafe > UMBRAL_NO_SIMPLE;
+        const limitado = Math.abs(delta) > MAX_AUTO_CORR;
+        if (limitado){
+          delta = Math.sign(delta) * MAX_AUTO_CORR;
+          objetivo = valor + delta;
+        }
+        return {valor: round05(objetivo), delta: round05(delta), noSimple, limitado, requerido: round05(requeridoParaSafe)};
       }
 
-      return {mpta: round05(mt), ldfa: round05(lf), alto: riesgoAltoParaPreservar, intermedio: riesgoIntermedio};
+      const tib = targetPorHueso(mpta0, riesgoAltoParaPreservar);
+      const fem = targetPorHueso(ldfa0, riesgoAltoParaPreservar);
+      const noResolubleSimple = tib.noSimple || fem.noSimple || mpta0 < 82 || mpta0 > 98 || ldfa0 < 82 || ldfa0 > 98;
+
+      return {
+        mpta: tib.valor,
+        ldfa: fem.valor,
+        alto: riesgoAltoParaPreservar,
+        intermedio: riesgoIntermedio,
+        noResolubleSimple,
+        tibiaLimitada: tib.limitado,
+        femurLimitado: fem.limitado,
+        tibiaRequerida: tib.requerido,
+        femurRequerida: fem.requerido,
+        maxAuto: MAX_AUTO_CORR
+      };
     }
 
     const targetReco = targetInicial(mpta, ldfa);
+    if (targetReco.noResolubleSimple) {
+      alertas.push('Deformidad ósea extrema: no forzar entrada a 87–93 por resección intraarticular. Requiere planificación compleja / estrategia alternativa.');
+    }
+    if (targetReco.tibiaLimitada) {
+      alertas.push('Corrección tibial automática limitada a ' + targetReco.maxAuto + '° para evitar resección excesiva de hueso sano.');
+    }
+    if (targetReco.femurLimitado) {
+      alertas.push('Corrección femoral automática limitada a ' + targetReco.maxAuto + '° para evitar resección ósea excesiva.');
+    }
     const mpta_reco = targetReco.mpta;
     const ldfa_reco = targetReco.ldfa;
     const delta_tibia_reco = mpta_reco - mpta;
@@ -2784,7 +2818,16 @@
     const medTxt = 'MPTA ' + mpta.toFixed(1) + '° · LDFA ' + ldfa.toFixed(1) + '°';
     const cambioRecoTxt = 'Δ tibia ' + (delta_tibia_reco >= 0 ? '+' : '') + delta_tibia_reco.toFixed(1) + '° · Δ fémur ' + (delta_femur_reco >= 0 ? '+' : '') + delta_femur_reco.toFixed(1) + '°';
 
-    if (score > 60 || altaCautelaLig || reductibilidad === 'rigida'){
+    if (targetReco.noResolubleSimple){
+      recoNivel = 'danger';
+      recoTitulo = 'No aplicar rKA simple: deformidad ósea extrema';
+      recoBadge = 'No resoluble por corte simple';
+      recoResumen = '<b>Recomendación:</b> no llevar automáticamente MPTA/LDFA a 87–93 si eso exige resecar demasiado hueso sano. En este caso la app limita la corrección automática y obliga a planificar una estrategia compleja.';
+      recoPlanA = 'Target limitado de seguridad docente: ' + targetTxt + ' (' + cambioRecoTxt + '). No es target definitivo; es un límite para no simular una resección absurda.';
+      recoPlanB = 'Plan alternativo: revisar telemetría completa, localización de la deformidad, defecto óseo, estabilidad y considerar planificación 3D/robótica, corrección extraarticular/osteotomía asociada, mayor constricción, stems/augments o estrategia convencional según el caso.';
+      recoConfirmar = 'Confirmar que la deformidad sea intraarticular vs extraarticular, JLCA, reductibilidad, defecto tibial real, laxitud lateral/medial y posibilidad de balancear sin resección asimétrica excesiva.';
+      recoFrase = 'La zona segura no se alcanza sacrificando hueso sano: si el ángulo extremo exige >4–5° de corrección intraarticular, el caso deja de ser rKA simple.';
+    } else if (score > 60 || altaCautelaLig || reductibilidad === 'rigida'){
       recoNivel = 'danger';
       recoTitulo = 'No cerrar con rKA pura: caso de alta cautela';
       recoBadge = 'Alta complejidad';
@@ -2838,12 +2881,13 @@
     $('top_datos_medidos').textContent = medTxt;
     $('top_datos_note').textContent = 'aHKA medido ' + fmtSignedDeg(ahka) + ' · JLO medido ' + jlo.toFixed(1) + '°';
     $('top_plan_sugerido').textContent = targetTxt;
-    $('top_plan_note').textContent = cambioRecoTxt + ' · aHKA recomendado ' + fmtSignedDeg(ahka_reco);
+    $('top_plan_note').textContent = cambioRecoTxt + ' · aHKA recomendado ' + fmtSignedDeg(ahka_reco) + (targetReco.noResolubleSimple ? ' · CORRECCIÓN LIMITADA: no es target definitivo' : '');
     $('top_sim_actual').textContent = simTxt;
     $('top_sim_note').textContent = (simDifiereDeReco ? 'No coincide con la recomendación.' : 'Coincide con la recomendación.') + ' aHKA simulado ' + fmtSignedDeg(ahka_plan);
     let riesgoDom = 'Balance/gaps';
     let riesgoNota = 'Confirmar estabilidad antes de corte definitivo.';
-    if (reductibilidad === 'rigida') { riesgoDom = 'Deformidad rígida'; riesgoNota = 'No forzar preservación de fenotipo si los gaps no acompañan.'; }
+    if (targetReco.noResolubleSimple) { riesgoDom = 'Deformidad ósea extrema'; riesgoNota = 'No forzar 87–93 por corte intraarticular; planificar alternativa.'; }
+    else if (reductibilidad === 'rigida') { riesgoDom = 'Deformidad rígida'; riesgoNota = 'No forzar preservación de fenotipo si los gaps no acompañan.'; }
     else if (altaCautelaLig) { riesgoDom = 'Ligamento no competente'; riesgoNota = 'Tener respaldo de constricción y validar MCL/LCL-PLC.'; }
     else if (jlca > 4) { riesgoDom = 'JLCA elevado'; riesgoNota = 'Probable componente intraarticular: separar colapso de fenotipo.'; }
     else if (fueraSafeZone) { riesgoDom = 'Target fuera 87–93'; riesgoNota = 'Justificar o acercar a zona segura.'; }
@@ -2866,7 +2910,7 @@
     $('reco_frase').textContent = recoFrase;
 
 
-    window._caso = { esDerecha, mpta, ldfa, mhka, dir, cpak, ahka_tipo, jlo_tipo, score, nivel, filosofia, mpta_plan, ldfa_plan, delta_tibia, delta_femur, ahka, ahka_plan, jlo_plan, jlo_plan_tipo, jla_visual, mhka_estimado, mcl, lcl, def, pat, jlca, reductibilidad, compartimentoInput, colapsoDominante, desgasteMed, desgasteLat, alertas, modoTibia, modoFemur, corte_tib_med, corte_tib_lat, corte_fem_med, corte_fem_lat, post_med, post_lat, slope, rot_text, problemas, pasos, mpta_reco, ldfa_reco, ahka_reco, jlo_reco, jla_reco, mhka_reco_estimado, delta_tibia_reco, delta_femur_reco, recoTitulo, recoBadge, recoResumen, recoPlanA, recoPlanB, recoConfirmar, recoFrase };
+    window._caso = { esDerecha, mpta, ldfa, mhka, dir, cpak, ahka_tipo, jlo_tipo, score, nivel, filosofia, mpta_plan, ldfa_plan, delta_tibia, delta_femur, ahka, ahka_plan, jlo_plan, jlo_plan_tipo, jla_visual, mhka_estimado, mcl, lcl, def, pat, jlca, reductibilidad, compartimentoInput, colapsoDominante, desgasteMed, desgasteLat, alertas, modoTibia, modoFemur, corte_tib_med, corte_tib_lat, corte_fem_med, corte_fem_lat, post_med, post_lat, slope, rot_text, problemas, pasos, mpta_reco, ldfa_reco, ahka_reco, jlo_reco, jla_reco, mhka_reco_estimado, delta_tibia_reco, delta_femur_reco, recoTitulo, recoBadge, recoResumen, recoPlanA, recoPlanB, recoConfirmar, recoFrase, noResolubleSimple: targetReco.noResolubleSimple, tibiaLimitada: targetReco.tibiaLimitada, femurLimitada: targetReco.femurLimitada, tibiaRequerida: targetReco.tibiaRequerida, femurRequerida: targetReco.femurRequerida };
   }
 
   function generarResumen(){
@@ -2897,6 +2941,7 @@
       'FILOSOFÍA: ' + c.filosofia,
       '',
       'RECOMENDACIÓN DINÁMICA:',
+      (c.noResolubleSimple ? '• ALERTA: deformidad extrema; no forzar 87–93 por resección intraarticular simple.' : null),
       '• ' + c.recoTitulo + ' (' + c.recoBadge + ')',
       '• Plan A: ' + c.recoPlanA,
       '• Plan B: ' + c.recoPlanB,
@@ -2926,12 +2971,14 @@
     let t_delta = 0, f_delta = 0;
     if (preset === 'preservar'){ t_delta = 0; f_delta = 0; }
     else if (preset === 'rka'){
+      // v9.7: preset restrictivo seguro no fuerza 87–93 si exige >4° por hueso.
+      const maxAuto = 4;
       let mpta_target = mpta;
-      if (mpta < 87) mpta_target = 87;
-      else if (mpta > 93) mpta_target = 93;
+      if (mpta < 87) mpta_target = Math.min(87, mpta + maxAuto);
+      else if (mpta > 93) mpta_target = Math.max(93, mpta - maxAuto);
       let ldfa_target = ldfa;
-      if (ldfa < 87) ldfa_target = 87;
-      else if (ldfa > 93) ldfa_target = 93;
+      if (ldfa < 87) ldfa_target = Math.min(87, ldfa + maxAuto);
+      else if (ldfa > 93) ldfa_target = Math.max(93, ldfa - maxAuto);
       t_delta = mpta_target - mpta;
       f_delta = ldfa_target - ldfa;
     } else if (preset === 'neutro'){
@@ -2994,8 +3041,8 @@
     const c = window._caso || {};
     const mpta = parseFloat($('mpta').value) || 90;
     const ldfa = parseFloat($('ldfa').value) || 90;
-    const mptaTarget = (typeof c.mpta_reco === 'number') ? c.mpta_reco : Math.min(93, Math.max(87, mpta));
-    const ldfaTarget = (typeof c.ldfa_reco === 'number') ? c.ldfa_reco : Math.min(93, Math.max(87, ldfa));
+    const mptaTarget = (typeof c.mpta_reco === 'number') ? c.mpta_reco : (mpta < 87 ? Math.min(87, mpta + 4) : (mpta > 93 ? Math.max(93, mpta - 4) : mpta));
+    const ldfaTarget = (typeof c.ldfa_reco === 'number') ? c.ldfa_reco : (ldfa < 87 ? Math.min(87, ldfa + 4) : (ldfa > 93 ? Math.max(93, ldfa - 4) : ldfa));
     setModoTibia('incremental');
     setModoFemur('incremental');
     $('tibia_slider').value = (mptaTarget - mpta).toFixed(1);
